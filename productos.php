@@ -1,95 +1,71 @@
 <?php
-header("Content-Type: application/json");
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
-
+header('Content-Type: application/json');
 require 'db.php'; // Archivo que contiene la conexión a la base de datos
 
-// Método HTTP y parámetros
 $method = $_SERVER['REQUEST_METHOD'];
-$endpoint = isset($_GET['endpoint']) ? $_GET['endpoint'] : '';
-$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
-$limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
+$endpoint = $_GET['endpoint'] ?? '';
+$page = $_GET['page'] ?? 1;
+$limit = $_GET['limit'] ?? 10;
+
+// Paginación
 $offset = ($page - 1) * $limit;
 
 switch ($method) {
     case 'GET':
         if ($endpoint === 'productos') {
-            // Paginación
-            $countQuery = "SELECT COUNT(*) as total FROM productos";
-            $countResult = $conn->query($countQuery);
-            $total = $countResult->fetch_assoc()['total'];
-
-            $query = "SELECT * FROM productos LIMIT $limit OFFSET $offset";
-            $result = $conn->query($query);
-
-            $productos = [];
-            while ($row = $result->fetch_assoc()) {
-                $productos[] = $row;
-            }
-
-            echo json_encode([
-                'productos' => $productos,
-                'pagina' => $page,
-                'totalPaginas' => ceil($total / $limit),
-                'totalRegistros' => $total
-            ]);
+            // Búsqueda de productos
+            $search = $_GET['search'] ?? '';
+            $sql = "SELECT * FROM productos WHERE CODIGOARTICULO LIKE :search OR DESCRIPCION LIKE :search LIMIT :limit OFFSET :offset";
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindValue(':search', "%$search%");
+            $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
+            $stmt->execute();
+            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            echo json_encode(['data' => $result]);
         }
         break;
 
     case 'POST':
         if ($endpoint === 'productos') {
+            // Alta de producto
             $data = json_decode(file_get_contents('php://input'), true);
-
-            $campos = implode(", ", array_keys($data));
-            $placeholders = "'" . implode("', '", array_map([$conn, 'real_escape_string'], $data)) . "'";
-
-            $sql = "INSERT INTO productos ($campos) VALUES ($placeholders)";
-            if ($conn->query($sql)) {
-                echo json_encode(['message' => 'Producto creado con éxito']);
-            } else {
-                echo json_encode(['error' => 'Error al crear producto: ' . $conn->error]);
-            }
+            $sql = "INSERT INTO productos (CODIGOARTICULO, CATEGORIA, SUBCATEGORIA, MARCA, FECHAREGISTRO, TAMANIO, COLOR, PRECIOMULTIPLE, MONEDA, PRECIODOLAR, PRECIOVENTAUNIDAD, PRECIOVENTAUNIDADDOS, PRECIOVENTAUNIDADTRES, DESCRIPCION, DEPOSITO, UBICACION, ESTADO, IVA, PRECIODECOSTO, STOCKDISPONIBLE, ULTIMOSTOCKCARGADO, UNIDADDEMEDIDAENTERO, MEDIDAPESOENTERO, PRECIOVENTA1KG1M, PRECIOVENTA100G50CM, UNIDADESVENDIDAS, METROSKILOSVENDIDOS, VENTAPOR, STOCKMINIMO, FECHAVENCIMIENTO, RUTAETIQUETAPRECIO, DESCRIPCIONCOMPLETA, IDFOTOCATALOGO)
+                    VALUES (:CODIGOARTICULO, :CATEGORIA, :SUBCATEGORIA, :MARCA, :FECHAREGISTRO, :TAMANIO, :COLOR, :PRECIOMULTIPLE, :MONEDA, :PRECIODOLAR, :PRECIOVENTAUNIDAD, :PRECIOVENTAUNIDADDOS, :PRECIOVENTAUNIDADTRES, :DESCRIPCION, :DEPOSITO, :UBICACION, :ESTADO, :IVA, :PRECIODECOSTO, :STOCKDISPONIBLE, :ULTIMOSTOCKCARGADO, :UNIDADDEMEDIDAENTERO, :MEDIDAPESOENTERO, :PRECIOVENTA1KG1M, :PRECIOVENTA100G50CM, :UNIDADESVENDIDAS, :METROSKILOSVENDIDOS, :VENTAPOR, :STOCKMINIMO, :FECHAVENCIMIENTO, :RUTAETIQUETAPRECIO, :DESCRIPCIONCOMPLETA, :IDFOTOCATALOGO)";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($data);
+            echo json_encode(['message' => 'Producto creado exitosamente']);
         }
         break;
 
     case 'PUT':
         if ($endpoint === 'productos') {
-            $codigo = isset($_GET['codigo']) ? $conn->real_escape_string($_GET['codigo']) : null;
-            if (!$codigo) {
-                echo json_encode(['error' => 'Código del producto no proporcionado']);
-                exit;
-            }
-
-            $data = json_decode(file_get_contents('php://input'), true);
-            $updates = [];
-            foreach ($data as $key => $value) {
-                $updates[] = sprintf("%s = '%s'", $conn->real_escape_string($key), $conn->real_escape_string($value));
-            }
-
-            $sql = "UPDATE productos SET " . implode(", ", $updates) . " WHERE CODIGOARTICULO = '$codigo'";
-            if ($conn->query($sql)) {
-                echo json_encode(['message' => 'Producto actualizado con éxito']);
+            // Modificación de producto
+            $id = $_GET['id'] ?? null;
+            if ($id) {
+                $data = json_decode(file_get_contents('php://input'), true);
+                $sql = "UPDATE productos SET CODIGOARTICULO = :CODIGOARTICULO, CATEGORIA = :CATEGORIA, SUBCATEGORIA = :SUBCATEGORIA, MARCA = :MARCA, FECHAREGISTRO = :FECHAREGISTRO, TAMANIO = :TAMANIO, COLOR = :COLOR, PRECIOMULTIPLE = :PRECIOMULTIPLE, MONEDA = :MONEDA, PRECIODOLAR = :PRECIODOLAR, PRECIOVENTAUNIDAD = :PRECIOVENTAUNIDAD, PRECIOVENTAUNIDADDOS = :PRECIOVENTAUNIDADDOS, PRECIOVENTAUNIDADTRES = :PRECIOVENTAUNIDADTRES, DESCRIPCION = :DESCRIPCION, DEPOSITO = :DEPOSITO, UBICACION = :UBICACION, ESTADO = :ESTADO, IVA = :IVA, PRECIODECOSTO = :PRECIODECOSTO, STOCKDISPONIBLE = :STOCKDISPONIBLE, ULTIMOSTOCKCARGADO = :ULTIMOSTOCKCARGADO, UNIDADDEMEDIDAENTERO = :UNIDADDEMEDIDAENTERO, MEDIDAPESOENTERO = :MEDIDAPESOENTERO, PRECIOVENTA1KG1M = :PRECIOVENTA1KG1M, PRECIOVENTA100G50CM = :PRECIOVENTA100G50CM, UNIDADESVENDIDAS = :UNIDADESVENDIDAS, METROSKILOSVENDIDOS = :METROSKILOSVENDIDOS, VENTAPOR = :VENTAPOR, STOCKMINIMO = :STOCKMINIMO, FECHAVENCIMIENTO = :FECHAVENCIMIENTO, RUTAETIQUETAPRECIO = :RUTAETIQUETAPRECIO, DESCRIPCIONCOMPLETA = :DESCRIPCIONCOMPLETA, IDFOTOCATALOGO = :IDFOTOCATALOGO WHERE IDPRODUCTO = :IDPRODUCTO";
+                $data['IDPRODUCTO'] = $id;
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute($data);
+                echo json_encode(['message' => 'Producto actualizado exitosamente']);
             } else {
-                echo json_encode(['error' => 'Error al actualizar producto: ' . $conn->error]);
+                echo json_encode(['error' => 'ID no proporcionado']);
             }
         }
         break;
 
     case 'DELETE':
         if ($endpoint === 'productos') {
-            $codigo = isset($_GET['codigo']) ? $conn->real_escape_string($_GET['codigo']) : null;
-            if (!$codigo) {
-                echo json_encode(['error' => 'Código del producto no proporcionado']);
-                exit;
-            }
-
-            $sql = "DELETE FROM productos WHERE CODIGOARTICULO = '$codigo'";
-            if ($conn->query($sql)) {
-                echo json_encode(['message' => 'Producto eliminado con éxito']);
+            // Baja de producto
+            $id = $_GET['id'] ?? null;
+            if ($id) {
+                $sql = "DELETE FROM productos WHERE IDPRODUCTO = :IDPRODUCTO";
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute(['IDPRODUCTO' => $id]);
+                echo json_encode(['message' => 'Producto eliminado exitosamente']);
             } else {
-                echo json_encode(['error' => 'Error al eliminar producto: ' . $conn->error]);
+                echo json_encode(['error' => 'ID no proporcionado']);
             }
         }
         break;
@@ -98,5 +74,4 @@ switch ($method) {
         echo json_encode(['error' => 'Método no soportado']);
         break;
 }
-
-$conn->close();
+?>
