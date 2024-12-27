@@ -1,5 +1,7 @@
 <?php
 header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *'); // Permite solicitudes desde cualquier dominio
+
 require 'db.php'; // Archivo que contiene la conexión a la base de datos
 
 $method = $_SERVER['REQUEST_METHOD'];
