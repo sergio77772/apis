@@ -24,7 +24,7 @@ switch ($method) {
             $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
             $stmt->execute();
             $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            echo json_encode(['data' => $result]);
+           echo json_encode($result);
         }
         break;
 
