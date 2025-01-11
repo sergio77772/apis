@@ -1,30 +1,35 @@
-<?php
-header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *'); // Permite solicitudes desde cualquier dominio
-
-require 'db.php'; // Archivo que contiene la conexión a la base de datos
-
-$method = $_SERVER['REQUEST_METHOD'];
-$endpoint = $_GET['endpoint'] ?? '';
-$page = $_GET['page'] ?? 1;
-$limit = $_GET['limit'] ?? 10;
-
-// Paginación
-$offset = ($page - 1) * $limit;
-
 switch ($method) {
     case 'GET':
         if ($endpoint === 'productos') {
             // Búsqueda de productos
             $search = $_GET['search'] ?? '';
-            $sql = "SELECT * FROM productos WHERE CODIGOARTICULO LIKE :search OR DESCRIPCION LIKE :search LIMIT :limit OFFSET :offset";
+            
+            // Consulta para contar el total de productos (sin límite ni offset)
+            $countSql = "SELECT COUNT(*) as total FROM productos WHERE CODIGOARTICULO LIKE :search OR DESCRIPCION LIKE :search";
+            $countStmt = $pdo->prepare($countSql);
+            $countStmt->bindValue(':search', "%$search%");
+            $countStmt->execute();
+            $totalProducts = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+            // Calcular el número total de páginas
+            $totalPages = ceil($totalProducts / $limit);
+
+            // Consulta para obtener los productos con paginación
+            $sql = "SELECT CODIGOARTICULO, DESCRIPCION, precio FROM productos WHERE CODIGOARTICULO LIKE :search OR DESCRIPCION LIKE :search LIMIT :limit OFFSET :offset";
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':search', "%$search%");
             $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
             $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
             $stmt->execute();
-            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-           echo json_encode($result);
+            $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // Respuesta en formato JSON
+            echo json_encode([
+                'products' => $products,
+                'totalProducts' => $totalProducts,
+                'totalPages' => $totalPages,
+                'currentPage' => (int)$page
+            ]);
         }
         break;
 
