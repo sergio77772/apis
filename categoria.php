@@ -13,7 +13,7 @@ $offset = ($page - 1) * $limit;
 
 switch ($method) {
     case 'GET':
-        if ($endpoint === 'categoria_web') {
+        if ($endpoint === 'categoria') {
             // Búsqueda
             $search = $_GET['search'] ?? '';
             $sql = "SELECT * FROM categoria_web WHERE categoriaweb LIKE :search LIMIT :limit OFFSET :offset";
@@ -28,7 +28,7 @@ switch ($method) {
         break;
 
     case 'POST':
-        if ($endpoint === 'categoria_web') {
+        if ($endpoint === 'categoria') {
             // Alta
             $data = json_decode(file_get_contents('php://input'), true);
             $sql = "INSERT INTO categoria_web (categoriaweb, estado, imagen)
@@ -40,7 +40,7 @@ switch ($method) {
         break;
 
     case 'PUT':
-        if ($endpoint === 'categoria_web') {
+        if ($endpoint === 'categoria') {
             // Modificación
             $id = $_GET['id'] ?? null;
             if ($id) {
@@ -57,7 +57,7 @@ switch ($method) {
         break;
 
     case 'DELETE':
-        if ($endpoint === 'categoria_web') {
+        if ($endpoint === 'categoria') {
             // Baja
             $id = $_GET['id'] ?? null;
             if ($id) {
