@@ -27,7 +27,7 @@ switch ($method) {
             $totalPages = ceil($totalProducts / $limit);
 
             // Consulta para obtener los productos con paginación
-            $sql = "SELECT CODIGOARTICULO, DESCRIPCION, precio FROM productos WHERE CODIGOARTICULO LIKE :search OR DESCRIPCION LIKE :search LIMIT :limit OFFSET :offset";
+            $sql = "SELECT CODIGOARTICULO, DESCRIPCION FROM productos WHERE CODIGOARTICULO LIKE :search OR DESCRIPCION LIKE :search LIMIT :limit OFFSET :offset";
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':search', "%$search%");
             $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
