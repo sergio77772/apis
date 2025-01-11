@@ -1,3 +1,15 @@
+<?php
+header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *'); // Permite solicitudes desde cualquier dominio
+
+require 'db.php'; // Archivo que contiene la conexión a la base de datos
+
+$method = $_SERVER['REQUEST_METHOD'];
+$endpoint = $_GET['endpoint'] ?? '';
+$page = $_GET['page'] ?? 1;
+$limit = $_GET['limit'] ?? 10;
+// Paginación
+$offset = ($page - 1) * $limit;
 switch ($method) {
     case 'GET':
         if ($endpoint === 'productos') {
