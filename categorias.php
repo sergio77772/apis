@@ -16,14 +16,34 @@ switch ($method) {
         if ($endpoint === 'categoria') {
             // Búsqueda
             $search = $_GET['search'] ?? '';
-            $sql = "SELECT * FROM categoria_web WHERE categoriaweb LIKE :search LIMIT :limit OFFSET :offset";
+
+            // Obtener el total de registros que coinciden
+            $countSql = "SELECT COUNT(*) as total FROM categoria_web WHERE categoriaweb LIKE :search";
+            $countStmt = $pdo->prepare($countSql);
+            $countStmt->bindValue(':search', "%$search%");
+            $countStmt->execute();
+            $total = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+            // Calcular el número total de páginas
+            $totalPages = ceil($total / $limit);
+
+            // Obtener los registros con límite y desplazamiento
+            $sql = "SELECT idcategoriaweb, categoriaweb, estado, imagen FROM categoria_web 
+                    WHERE categoriaweb LIKE :search LIMIT :limit OFFSET :offset";
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':search', "%$search%");
             $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
             $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
             $stmt->execute();
             $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            echo json_encode(['data' => $result]);
+
+            // Enviar respuesta con datos y paginación
+            echo json_encode([
+                'categories' => $result,       // Datos de las categorías
+                'total' => $total,            // Total de categorías
+                'totalPages' => $totalPages,  // Total de páginas
+                'currentPage' => (int)$page,  // Página actual
+            ]);
         }
         break;
 
@@ -45,7 +65,9 @@ switch ($method) {
             $id = $_GET['id'] ?? null;
             if ($id) {
                 $data = json_decode(file_get_contents('php://input'), true);
-                $sql = "UPDATE categoria_web SET categoriaweb = :categoriaweb, estado = :estado, imagen = :imagen WHERE idcategoriaweb = :idcategoriaweb";
+                $sql = "UPDATE categoria_web 
+                        SET categoriaweb = :categoriaweb, estado = :estado, imagen = :imagen 
+                        WHERE idcategoriaweb = :idcategoriaweb";
                 $data['idcategoriaweb'] = $id;
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute($data);
