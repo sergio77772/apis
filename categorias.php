@@ -18,7 +18,7 @@ switch ($method) {
             $search = $_GET['search'] ?? '';
 
             // Obtener el total de registros que coinciden
-            $countSql = "SELECT COUNT(*) as total FROM categoria_web WHERE categoriaweb LIKE :search";
+            $countSql = "SELECT COUNT(*) as total FROM categoria_web WHERE nombre LIKE :search";
             $countStmt = $pdo->prepare($countSql);
             $countStmt->bindValue(':search', "%$search%");
             $countStmt->execute();
@@ -28,8 +28,10 @@ switch ($method) {
             $totalPages = ceil($total / $limit);
 
             // Obtener los registros con límite y desplazamiento
-            $sql = "SELECT idcategoriaweb, categoriaweb, estado, imagen FROM categoria_web 
-                    WHERE categoriaweb LIKE :search LIMIT :limit OFFSET :offset";
+            $sql = "SELECT idcategoriaweb, nombre, estado, imagen, descripcion 
+                    FROM categoria_web 
+                    WHERE nombre LIKE :search 
+                    LIMIT :limit OFFSET :offset";
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':search', "%$search%");
             $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
@@ -51,8 +53,8 @@ switch ($method) {
         if ($endpoint === 'categoria') {
             // Alta
             $data = json_decode(file_get_contents('php://input'), true);
-            $sql = "INSERT INTO categoria_web (categoriaweb, estado, imagen)
-                    VALUES (:categoriaweb, :estado, :imagen)";
+            $sql = "INSERT INTO categoria_web (nombre, estado, imagen, descripcion)
+                    VALUES (:nombre, :estado, :imagen, :descripcion)";
             $stmt = $pdo->prepare($sql);
             $stmt->execute($data);
             echo json_encode(['message' => 'Categoría creada exitosamente']);
@@ -66,7 +68,7 @@ switch ($method) {
             if ($id) {
                 $data = json_decode(file_get_contents('php://input'), true);
                 $sql = "UPDATE categoria_web 
-                        SET categoriaweb = :categoriaweb, estado = :estado, imagen = :imagen 
+                        SET nombre = :nombre, estado = :estado, imagen = :imagen, descripcion = :descripcion
                         WHERE idcategoriaweb = :idcategoriaweb";
                 $data['idcategoriaweb'] = $id;
                 $stmt = $pdo->prepare($sql);
