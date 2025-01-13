@@ -1,6 +1,8 @@
 <?php
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *'); // Permite solicitudes desde cualquier dominio
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
 require 'db.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
@@ -8,26 +10,27 @@ $endpoint = $_GET['endpoint'] ?? '';
 $page = $_GET['page'] ?? 1;
 $limit = $_GET['limit'] ?? 10;
 
+$uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/img/'; // Directorio en la raíz del servidor
+
 // Paginación
 $offset = ($page - 1) * $limit;
 
 switch ($method) {
     case 'GET':
         if ($endpoint === 'categoria') {
-            // Búsqueda
             $search = $_GET['search'] ?? '';
 
-            // Obtener el total de registros que coinciden
+            // Obtener el total de registros
             $countSql = "SELECT COUNT(*) as total FROM categoria_web WHERE nombre LIKE :search";
             $countStmt = $pdo->prepare($countSql);
             $countStmt->bindValue(':search', "%$search%");
             $countStmt->execute();
             $total = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
 
-            // Calcular el número total de páginas
+            // Calcular páginas totales
             $totalPages = ceil($total / $limit);
 
-            // Obtener los registros con límite y desplazamiento
+            // Obtener los registros
             $sql = "SELECT idcategoriaweb, nombre, estado, imagen, descripcion 
                     FROM categoria_web 
                     WHERE nombre LIKE :search 
@@ -39,31 +42,55 @@ switch ($method) {
             $stmt->execute();
             $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            // Enviar respuesta con datos y paginación
+            // Respuesta JSON
             echo json_encode([
-                'categories' => $result,       // Datos de las categorías
-                'total' => $total,            // Total de categorías
-                'totalPages' => $totalPages,  // Total de páginas
-                'currentPage' => (int)$page,  // Página actual
+                'categories' => $result,
+                'total' => $total,
+                'totalPages' => $totalPages,
+                'currentPage' => (int)$page,
             ]);
         }
         break;
 
     case 'POST':
         if ($endpoint === 'categoria') {
-            // Alta
             $data = json_decode(file_get_contents('php://input'), true);
             $sql = "INSERT INTO categoria_web (nombre, estado, imagen, descripcion)
                     VALUES (:nombre, :estado, :imagen, :descripcion)";
             $stmt = $pdo->prepare($sql);
             $stmt->execute($data);
             echo json_encode(['message' => 'Categoría creada exitosamente']);
+        } elseif ($endpoint === 'upload') {
+            // Subida de imagen
+            if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+                $file = $_FILES['image'];
+                $fileName = basename($file['name']);
+                $targetFilePath = $uploadDir . $fileName;
+
+                // Crear directorio si no existe
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0755, true);
+                }
+
+                // Validar el tipo de archivo
+                $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+                if (in_array($file['type'], $allowedTypes)) {
+                    if (move_uploaded_file($file['tmp_name'], $targetFilePath)) {
+                        echo json_encode(['message' => 'Imagen subida exitosamente', 'filePath' => "/img/$fileName"]);
+                    } else {
+                        echo json_encode(['error' => 'Error al mover el archivo']);
+                    }
+                } else {
+                    echo json_encode(['error' => 'Tipo de archivo no permitido']);
+                }
+            } else {
+                echo json_encode(['error' => 'No se recibió un archivo válido']);
+            }
         }
         break;
 
     case 'PUT':
         if ($endpoint === 'categoria') {
-            // Modificación
             $id = $_GET['id'] ?? null;
             if ($id) {
                 $data = json_decode(file_get_contents('php://input'), true);
@@ -82,7 +109,6 @@ switch ($method) {
 
     case 'DELETE':
         if ($endpoint === 'categoria') {
-            // Baja
             $id = $_GET['id'] ?? null;
             if ($id) {
                 $sql = "DELETE FROM categoria_web WHERE idcategoriaweb = :idcategoriaweb";
