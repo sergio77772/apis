@@ -85,7 +85,11 @@ switch ($method) {
         }
         break;
 
-   function debugSql($sql, $data) {
+
+case 'PUT':
+    if ($endpoint === 'productos') {
+
+function debugSql($sql, $data) {
     foreach ($data as $key => $value) {
         // Aseguramos que el valor esté bien formateado para la consulta SQL
         if (is_string($value)) {
@@ -98,8 +102,7 @@ switch ($method) {
     return $sql;
 }
 
-case 'PUT':
-    if ($endpoint === 'productos') {
+        
         $id = $_GET['id'] ?? null;
         if ($id) {
             // Obtener datos del formulario
