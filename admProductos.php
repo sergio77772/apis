@@ -90,10 +90,18 @@ case 'PUT':
         $id = $_GET['id'] ?? null;
 
         if ($id) {
-            // Usar $_POST para capturar los datos del formulario
-            $data = $_POST;
+            // Capturar datos enviados en la solicitud
+            $data = $_POST; // Si estás usando form-data
+            // Si usas JSON:
+            // $data = json_decode(file_get_contents("php://input"), true);
 
-            // Manejar la carga de imagen (si existe)
+            // Imprimir los datos para depuración
+            if (empty($data)) {
+                echo json_encode(['error' => 'No se enviaron datos en la solicitud']);
+                exit;
+            }
+
+            // Manejar la carga de imagen (opcional)
             if (isset($_FILES['IMAGE']) && $_FILES['IMAGE']['error'] === UPLOAD_ERR_OK) {
                 $file = $_FILES['IMAGE'];
                 $fileName = basename($file['name']);
@@ -139,6 +147,7 @@ case 'PUT':
         }
     }
     break;
+
 
 
     case 'DELETE':
