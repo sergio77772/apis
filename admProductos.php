@@ -1,6 +1,8 @@
 <?php
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *'); // Permite solicitudes desde cualquier dominio
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
 
 require 'db.php'; // Archivo que contiene la conexión a la base de datos
 
