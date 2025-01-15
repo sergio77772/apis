@@ -108,9 +108,16 @@ switch ($method) {
 
                 $sql = "UPDATE productos SET CODIGOARTICULO = :CODIGOARTICULO, CATEGORIA = :CATEGORIA, SUBCATEGORIA = :SUBCATEGORIA, MARCA = :MARCA, FECHAREGISTRO = :FECHAREGISTRO, TAMANIO = :TAMANIO, COLOR = :COLOR, PRECIOMULTIPLE = :PRECIOMULTIPLE, MONEDA = :MONEDA, PRECIODOLAR = :PRECIODOLAR, PRECIOVENTAUNIDAD = :PRECIOVENTAUNIDAD, PRECIOVENTAUNIDADDOS = :PRECIOVENTAUNIDADDOS, PRECIOVENTAUNIDADTRES = :PRECIOVENTAUNIDADTRES, DESCRIPCION = :DESCRIPCION, DEPOSITO = :DEPOSITO, UBICACION = :UBICACION, ESTADO = :ESTADO, IVA = :IVA, PRECIODECOSTO = :PRECIODECOSTO, STOCKDISPONIBLE = :STOCKDISPONIBLE, ULTIMOSTOCKCARGADO = :ULTIMOSTOCKCARGADO, UNIDADDEMEDIDAENTERO = :UNIDADDEMEDIDAENTERO, MEDIDAPESOENTERO = :MEDIDAPESOENTERO, PRECIOVENTA1KG1M = :PRECIOVENTA1KG1M, PRECIOVENTA100G50CM = :PRECIOVENTA100G50CM, UNIDADESVENDIDAS = :UNIDADESVENDIDAS, METROSKILOSVENDIDOS = :METROSKILOSVENDIDOS, VENTAPOR = :VENTAPOR, STOCKMINIMO = :STOCKMINIMO, FECHAVENCIMIENTO = :FECHAVENCIMIENTO, RUTAETIQUETAPRECIO = :RUTAETIQUETAPRECIO, DESCRIPCIONCOMPLETA = :DESCRIPCIONCOMPLETA, IDFOTOCATALOGO = :IDFOTOCATALOGO WHERE idproducto = :idproducto";
                 $data['idproducto'] = $id;
-                        function debugSql($sql, $data) {
+
+     function debugSql($sql, $data) {
                 foreach ($data as $key => $value) {
-                    $sql = str_replace(":$key", "'$value'", $sql);
+                    // Aseguramos que el valor esté bien formateado para la consulta SQL
+                    if (is_string($value)) {
+                        $value = "'$value'"; // Asegurar que las cadenas estén entre comillas
+                    } elseif (is_null($value)) {
+                        $value = 'NULL'; // Si es NULL, se coloca como NULL
+                    }
+                    $sql = str_replace(":$key", $value, $sql);
                 }
                 return $sql;
             }
@@ -118,6 +125,7 @@ switch ($method) {
             // Depuración: ver la consulta SQL con los valores reemplazados
             $debugSql = debugSql($sql, $data);
             echo "<pre>Consulta SQL con valores reemplazados: $debugSql</pre>";
+                
 
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute($data);
