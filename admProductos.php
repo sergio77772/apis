@@ -8,25 +8,27 @@ $method = $_SERVER['REQUEST_METHOD'];
 $endpoint = $_GET['endpoint'] ?? '';
 $page = $_GET['page'] ?? 1;
 $limit = $_GET['limit'] ?? 10;
+
+$uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/img/'; // Directorio donde se guardarán las imágenes
+
 // Paginación
 $offset = ($page - 1) * $limit;
+
 switch ($method) {
     case 'GET':
         if ($endpoint === 'productos') {
-            // Búsqueda de productos
             $search = $_GET['search'] ?? '';
             
-            // Consulta para contar el total de productos (sin límite ni offset)
+            // Consulta para contar el total de productos
             $countSql = "SELECT COUNT(*) as total FROM productos WHERE CODIGOARTICULO LIKE :search OR DESCRIPCION LIKE :search";
             $countStmt = $pdo->prepare($countSql);
             $countStmt->bindValue(':search', "%$search%");
             $countStmt->execute();
             $totalProducts = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
 
-            // Calcular el número total de páginas
             $totalPages = ceil($totalProducts / $limit);
 
-            // Consulta para obtener los productos con paginación
+            // Consulta para obtener productos
             $sql = "SELECT * FROM productos WHERE CODIGOARTICULO LIKE :search OR DESCRIPCION LIKE :search LIMIT :limit OFFSET :offset";
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':search', "%$search%");
@@ -35,7 +37,6 @@ switch ($method) {
             $stmt->execute();
             $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            // Respuesta en formato JSON
             echo json_encode([
                 'products' => $products,
                 'totalProducts' => $totalProducts,
@@ -47,24 +48,48 @@ switch ($method) {
 
     case 'POST':
         if ($endpoint === 'productos') {
-            // Alta de producto
             $data = json_decode(file_get_contents('php://input'), true);
             $sql = "INSERT INTO productos (CODIGOARTICULO, CATEGORIA, SUBCATEGORIA, MARCA, FECHAREGISTRO, TAMANIO, COLOR, PRECIOMULTIPLE, MONEDA, PRECIODOLAR, PRECIOVENTAUNIDAD, PRECIOVENTAUNIDADDOS, PRECIOVENTAUNIDADTRES, DESCRIPCION, DEPOSITO, UBICACION, ESTADO, IVA, PRECIODECOSTO, STOCKDISPONIBLE, ULTIMOSTOCKCARGADO, UNIDADDEMEDIDAENTERO, MEDIDAPESOENTERO, PRECIOVENTA1KG1M, PRECIOVENTA100G50CM, UNIDADESVENDIDAS, METROSKILOSVENDIDOS, VENTAPOR, STOCKMINIMO, FECHAVENCIMIENTO, RUTAETIQUETAPRECIO, DESCRIPCIONCOMPLETA, IDFOTOCATALOGO)
                     VALUES (:CODIGOARTICULO, :CATEGORIA, :SUBCATEGORIA, :MARCA, :FECHAREGISTRO, :TAMANIO, :COLOR, :PRECIOMULTIPLE, :MONEDA, :PRECIODOLAR, :PRECIOVENTAUNIDAD, :PRECIOVENTAUNIDADDOS, :PRECIOVENTAUNIDADTRES, :DESCRIPCION, :DEPOSITO, :UBICACION, :ESTADO, :IVA, :PRECIODECOSTO, :STOCKDISPONIBLE, :ULTIMOSTOCKCARGADO, :UNIDADDEMEDIDAENTERO, :MEDIDAPESOENTERO, :PRECIOVENTA1KG1M, :PRECIOVENTA100G50CM, :UNIDADESVENDIDAS, :METROSKILOSVENDIDOS, :VENTAPOR, :STOCKMINIMO, :FECHAVENCIMIENTO, :RUTAETIQUETAPRECIO, :DESCRIPCIONCOMPLETA, :IDFOTOCATALOGO)";
             $stmt = $pdo->prepare($sql);
             $stmt->execute($data);
             echo json_encode(['message' => 'Producto creado exitosamente']);
+        } elseif ($endpoint === 'upload') {
+            if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+                $file = $_FILES['image'];
+                $fileName = basename($file['name']);
+                $targetFilePath = $uploadDir . $fileName;
+
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0755, true);
+                }
+
+                $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+                if (in_array($file['type'], $allowedTypes)) {
+                    if (move_uploaded_file($file['tmp_name'], $targetFilePath)) {
+                        echo json_encode([
+                            'message' => 'Imagen subida exitosamente',
+                            'filePath' => "/img/$fileName"
+                        ]);
+                    } else {
+                        echo json_encode(['error' => 'Error al mover el archivo']);
+                    }
+                } else {
+                    echo json_encode(['error' => 'Tipo de archivo no permitido']);
+                }
+            } else {
+                echo json_encode(['error' => 'Error al subir la imagen']);
+            }
         }
         break;
 
     case 'PUT':
         if ($endpoint === 'productos') {
-            // Modificación de producto
             $id = $_GET['id'] ?? null;
             if ($id) {
                 $data = json_decode(file_get_contents('php://input'), true);
-                $sql = "UPDATE productos SET CODIGOARTICULO = :CODIGOARTICULO, CATEGORIA = :CATEGORIA, SUBCATEGORIA = :SUBCATEGORIA, MARCA = :MARCA, FECHAREGISTRO = :FECHAREGISTRO, TAMANIO = :TAMANIO, COLOR = :COLOR, PRECIOMULTIPLE = :PRECIOMULTIPLE, MONEDA = :MONEDA, PRECIODOLAR = :PRECIODOLAR, PRECIOVENTAUNIDAD = :PRECIOVENTAUNIDAD, PRECIOVENTAUNIDADDOS = :PRECIOVENTAUNIDADDOS, PRECIOVENTAUNIDADTRES = :PRECIOVENTAUNIDADTRES, DESCRIPCION = :DESCRIPCION, DEPOSITO = :DEPOSITO, UBICACION = :UBICACION, ESTADO = :ESTADO, IVA = :IVA, PRECIODECOSTO = :PRECIODECOSTO, STOCKDISPONIBLE = :STOCKDISPONIBLE, ULTIMOSTOCKCARGADO = :ULTIMOSTOCKCARGADO, UNIDADDEMEDIDAENTERO = :UNIDADDEMEDIDAENTERO, MEDIDAPESOENTERO = :MEDIDAPESOENTERO, PRECIOVENTA1KG1M = :PRECIOVENTA1KG1M, PRECIOVENTA100G50CM = :PRECIOVENTA100G50CM, UNIDADESVENDIDAS = :UNIDADESVENDIDAS, METROSKILOSVENDIDOS = :METROSKILOSVENDIDOS, VENTAPOR = :VENTAPOR, STOCKMINIMO = :STOCKMINIMO, FECHAVENCIMIENTO = :FECHAVENCIMIENTO, RUTAETIQUETAPRECIO = :RUTAETIQUETAPRECIO, DESCRIPCIONCOMPLETA = :DESCRIPCIONCOMPLETA, IDFOTOCATALOGO = :IDFOTOCATALOGO WHERE IDPRODUCTO = :IDPRODUCTO";
-                $data['IDPRODUCTO'] = $id;
+                $sql = "UPDATE productos SET CODIGOARTICULO = :CODIGOARTICULO, CATEGORIA = :CATEGORIA, SUBCATEGORIA = :SUBCATEGORIA, MARCA = :MARCA, FECHAREGISTRO = :FECHAREGISTRO, TAMANIO = :TAMANIO, COLOR = :COLOR, PRECIOMULTIPLE = :PRECIOMULTIPLE, MONEDA = :MONEDA, PRECIODOLAR = :PRECIODOLAR, PRECIOVENTAUNIDAD = :PRECIOVENTAUNIDAD, PRECIOVENTAUNIDADDOS = :PRECIOVENTAUNIDADDOS, PRECIOVENTAUNIDADTRES = :PRECIOVENTAUNIDADTRES, DESCRIPCION = :DESCRIPCION, DEPOSITO = :DEPOSITO, UBICACION = :UBICACION, ESTADO = :ESTADO, IVA = :IVA, PRECIODECOSTO = :PRECIODECOSTO, STOCKDISPONIBLE = :STOCKDISPONIBLE, ULTIMOSTOCKCARGADO = :ULTIMOSTOCKCARGADO, UNIDADDEMEDIDAENTERO = :UNIDADDEMEDIDAENTERO, MEDIDAPESOENTERO = :MEDIDAPESOENTERO, PRECIOVENTA1KG1M = :PRECIOVENTA1KG1M, PRECIOVENTA100G50CM = :PRECIOVENTA100G50CM, UNIDADESVENDIDAS = :UNIDADESVENDIDAS, METROSKILOSVENDIDOS = :METROSKILOSVENDIDOS, VENTAPOR = :VENTAPOR, STOCKMINIMO = :STOCKMINIMO, FECHAVENCIMIENTO = :FECHAVENCIMIENTO, RUTAETIQUETAPRECIO = :RUTAETIQUETAPRECIO, DESCRIPCIONCOMPLETA = :DESCRIPCIONCOMPLETA, IDFOTOCATALOGO = :IDFOTOCATALOGO WHERE idproducto = :idproducto";
+                $data['idproducto'] = $id;
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute($data);
                 echo json_encode(['message' => 'Producto actualizado exitosamente']);
@@ -76,12 +101,11 @@ switch ($method) {
 
     case 'DELETE':
         if ($endpoint === 'productos') {
-            // Baja de producto
             $id = $_GET['id'] ?? null;
             if ($id) {
-                $sql = "DELETE FROM productos WHERE IDPRODUCTO = :IDPRODUCTO";
+                $sql = "DELETE FROM productos WHERE idproducto = :idproducto";
                 $stmt = $pdo->prepare($sql);
-                $stmt->execute(['IDPRODUCTO' => $id]);
+                $stmt->execute(['idproducto' => $id]);
                 echo json_encode(['message' => 'Producto eliminado exitosamente']);
             } else {
                 echo json_encode(['error' => 'ID no proporcionado']);
