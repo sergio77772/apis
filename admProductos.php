@@ -89,7 +89,23 @@ switch ($method) {
         if ($endpoint === 'productos') {
             $id = $_GET['id'] ?? null;
             if ($id) {
-                $data = json_decode(file_get_contents('php://input'), true);
+                // Obtener datos del formulario
+                parse_str(file_get_contents("php://input"), $_PUT);
+                $data = $_PUT;
+
+                // Verificar si hay una imagen cargada
+                if (isset($_FILES['IMAGE']) && $_FILES['IMAGE']['error'] === UPLOAD_ERR_OK) {
+                    $file = $_FILES['IMAGE'];
+                    $fileName = basename($file['name']);
+                    $targetFilePath = $uploadDir . $fileName;
+                    if (move_uploaded_file($file['tmp_name'], $targetFilePath)) {
+                        $data['IDFOTOCATALOGO'] = "/img/$fileName"; // Asignar ruta de la imagen
+                    } else {
+                        echo json_encode(['error' => 'Error al subir la imagen']);
+                        exit;
+                    }
+                }
+
                 $sql = "UPDATE productos SET CODIGOARTICULO = :CODIGOARTICULO, CATEGORIA = :CATEGORIA, SUBCATEGORIA = :SUBCATEGORIA, MARCA = :MARCA, FECHAREGISTRO = :FECHAREGISTRO, TAMANIO = :TAMANIO, COLOR = :COLOR, PRECIOMULTIPLE = :PRECIOMULTIPLE, MONEDA = :MONEDA, PRECIODOLAR = :PRECIODOLAR, PRECIOVENTAUNIDAD = :PRECIOVENTAUNIDAD, PRECIOVENTAUNIDADDOS = :PRECIOVENTAUNIDADDOS, PRECIOVENTAUNIDADTRES = :PRECIOVENTAUNIDADTRES, DESCRIPCION = :DESCRIPCION, DEPOSITO = :DEPOSITO, UBICACION = :UBICACION, ESTADO = :ESTADO, IVA = :IVA, PRECIODECOSTO = :PRECIODECOSTO, STOCKDISPONIBLE = :STOCKDISPONIBLE, ULTIMOSTOCKCARGADO = :ULTIMOSTOCKCARGADO, UNIDADDEMEDIDAENTERO = :UNIDADDEMEDIDAENTERO, MEDIDAPESOENTERO = :MEDIDAPESOENTERO, PRECIOVENTA1KG1M = :PRECIOVENTA1KG1M, PRECIOVENTA100G50CM = :PRECIOVENTA100G50CM, UNIDADESVENDIDAS = :UNIDADESVENDIDAS, METROSKILOSVENDIDOS = :METROSKILOSVENDIDOS, VENTAPOR = :VENTAPOR, STOCKMINIMO = :STOCKMINIMO, FECHAVENCIMIENTO = :FECHAVENCIMIENTO, RUTAETIQUETAPRECIO = :RUTAETIQUETAPRECIO, DESCRIPCIONCOMPLETA = :DESCRIPCIONCOMPLETA, IDFOTOCATALOGO = :IDFOTOCATALOGO WHERE idproducto = :idproducto";
                 $data['idproducto'] = $id;
                 $stmt = $pdo->prepare($sql);
@@ -116,7 +132,6 @@ switch ($method) {
         break;
 
     default:
-        echo json_encode(['error' => 'Método no soportado']);
+        echo json_encode(['error' => 'Método no permitido']);
         break;
 }
-?>
