@@ -87,41 +87,34 @@ switch ($method) {
 
 case 'PUT':
     if ($endpoint === 'productos') {
-        function debugSql($sql, $data) {
-    foreach ($data as $key => $value) {
-        // Aseguramos que el valor esté bien formateado para la consulta SQL
-        if (is_string($value)) {
-            $value = "'$value'"; // Asegurar que las cadenas estén entre comillas
-        } elseif (is_null($value)) {
-            $value = 'NULL'; // Si es NULL, se coloca como NULL
-        }
-        $sql = str_replace(":$key", $value, $sql);
-    }
-    return $sql;
-}
         $id = $_GET['id'] ?? null;
         if ($id) {
-            // Obtener datos del formulario
-            parse_str(file_get_contents("php://input"), $_PUT);
-            $data = $_PUT;
+            parse_str(file_get_contents("php://input"), $data); // Obtener datos del cuerpo de la solicitud
+            
+            // Convertir valores "null" a NULL
+            foreach ($data as $key => $value) {
+                if ($value === "null") {
+                    $data[$key] = null;
+                }
+            }
 
-            // Verificar si hay una imagen cargada
+            // Manejar la carga de imagen (si existe)
             if (isset($_FILES['IMAGE']) && $_FILES['IMAGE']['error'] === UPLOAD_ERR_OK) {
                 $file = $_FILES['IMAGE'];
                 $fileName = basename($file['name']);
                 $targetFilePath = $uploadDir . $fileName;
+
                 if (move_uploaded_file($file['tmp_name'], $targetFilePath)) {
-                    $data['IDFOTOCATALOGO'] = "/img/$fileName"; // Asignar ruta de la imagen
+                    $data['IDFOTOCATALOGO'] = "/img/$fileName"; // Ruta relativa de la imagen
                 } else {
                     echo json_encode(['error' => 'Error al subir la imagen']);
                     exit;
                 }
+            } else {
+                $data['IDFOTOCATALOGO'] = null; // Si no se sube imagen, asignar NULL
             }
 
-            // Depuración: ver los datos antes de ejecutar la consulta
-            echo "<pre>Datos antes de la consulta SQL: " . print_r($data, true) . "</pre>";
-
-            // Consulta SQL para actualizar el producto
+            // Preparar consulta SQL para actualizar el producto
             $sql = "UPDATE productos SET 
                 CODIGOARTICULO = :CODIGOARTICULO, 
                 CATEGORIA = :CATEGORIA, 
@@ -155,25 +148,26 @@ case 'PUT':
                 FECHAVENCIMIENTO = :FECHAVENCIMIENTO, 
                 RUTAETIQUETAPRECIO = :RUTAETIQUETAPRECIO, 
                 DESCRIPCIONCOMPLETA = :DESCRIPCIONCOMPLETA, 
-                IDFOTOCATALOGO = :IDFOTOCATALOGO 
+                IDFOTOCATALOGO = :IDFOTOCATALOGO
             WHERE idproducto = :idproducto";
 
-            // Asignar el idproducto a los datos
+            // Asignar ID del producto al arreglo de datos
             $data['idproducto'] = $id;
 
-            // Depuración: ver la consulta SQL con los valores reemplazados
-            $debugSql = debugSql($sql, $data);
-            echo "<pre>Consulta SQL con valores reemplazados: $debugSql</pre>";  // Muestra la consulta para depurar
-
-            // Ahora ejecutamos la consulta
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute($data);
-            echo json_encode(['message' => 'Producto actualizado exitosamente']);
+            // Ejecutar consulta SQL
+            try {
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute($data);
+                echo json_encode(['message' => 'Producto actualizado exitosamente']);
+            } catch (PDOException $e) {
+                echo json_encode(['error' => $e->getMessage()]);
+            }
         } else {
             echo json_encode(['error' => 'ID no proporcionado']);
         }
     }
     break;
+
 
     case 'DELETE':
         if ($endpoint === 'productos') {
