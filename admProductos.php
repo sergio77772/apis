@@ -90,15 +90,8 @@ case 'PUT':
         $id = $_GET['id'] ?? null;
 
         if ($id) {
-            // Usar $_POST en lugar de parse_str para multipart/form-data
+            // Usar $_POST para capturar los datos del formulario
             $data = $_POST;
-
-            // Convertir valores "null" explícitos a NULL
-            foreach ($data as $key => $value) {
-                if ($value === "null") {
-                    $data[$key] = null;
-                }
-            }
 
             // Manejar la carga de imagen (si existe)
             if (isset($_FILES['IMAGE']) && $_FILES['IMAGE']['error'] === UPLOAD_ERR_OK) {
@@ -112,35 +105,23 @@ case 'PUT':
                     echo json_encode(['error' => 'Error al subir la imagen']);
                     exit;
                 }
-            } else {
-                $data['IDFOTOCATALOGO'] = null; // Si no se sube imagen, asignar NULL
             }
 
-            // Lista de columnas actualizables
-            $columns = [
-                'CODIGOARTICULO', 'CATEGORIA', 'SUBCATEGORIA', 'MARCA',
-                'FECHAREGISTRO', 'TAMANIO', 'COLOR', 'PRECIOMULTIPLE',
-                'MONEDA', 'PRECIODOLAR', 'PRECIOVENTAUNIDAD',
-                'PRECIOVENTAUNIDADDOS', 'PRECIOVENTAUNIDADTRES', 'DESCRIPCION',
-                'DEPOSITO', 'UBICACION', 'ESTADO', 'IVA', 'PRECIODECOSTO',
-                'STOCKDISPONIBLE', 'ULTIMOSTOCKCARGADO', 'UNIDADDEMEDIDAENTERO',
-                'MEDIDAPESOENTERO', 'PRECIOVENTA1KG1M', 'PRECIOVENTA100G50CM',
-                'UNIDADESVENDIDAS', 'METROSKILOSVENDIDOS', 'VENTAPOR',
-                'STOCKMINIMO', 'FECHAVENCIMIENTO', 'RUTAETIQUETAPRECIO',
-                'DESCRIPCIONCOMPLETA', 'IDFOTOCATALOGO'
-            ];
-
-            // Generar dinámicamente la consulta SET
+            // Generar la consulta SET dinámicamente según los datos recibidos
             $set = [];
-            foreach ($columns as $column) {
-                $set[] = "$column = :$column";
-                if (!array_key_exists($column, $data)) {
-                    $data[$column] = null; // Asegurar que todas las columnas tienen un valor
+            foreach ($data as $key => $value) {
+                if ($key !== 'idproducto') { // Excluir ID de la consulta SET
+                    $set[] = "$key = :$key";
                 }
             }
-            $setSql = implode(', ', $set);
 
-            // Consulta SQL final
+            // Verificar que haya al menos un campo para actualizar
+            if (empty($set)) {
+                echo json_encode(['error' => 'No se enviaron campos para actualizar']);
+                exit;
+            }
+
+            $setSql = implode(', ', $set);
             $sql = "UPDATE productos SET $setSql WHERE idproducto = :idproducto";
 
             // Agregar el ID del producto a los datos
