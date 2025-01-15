@@ -88,6 +88,7 @@ switch ($method) {
 case 'PUT':
     if ($endpoint === 'productos') {
         $id = $_GET['id'] ?? null;
+
         if ($id) {
             parse_str(file_get_contents("php://input"), $data); // Obtener datos del cuerpo de la solicitud
             
@@ -114,45 +115,34 @@ case 'PUT':
                 $data['IDFOTOCATALOGO'] = null; // Si no se sube imagen, asignar NULL
             }
 
-            // Preparar consulta SQL para actualizar el producto
-            $sql = "UPDATE productos SET 
-                CODIGOARTICULO = :CODIGOARTICULO, 
-                CATEGORIA = :CATEGORIA, 
-                SUBCATEGORIA = :SUBCATEGORIA, 
-                MARCA = :MARCA, 
-                FECHAREGISTRO = :FECHAREGISTRO, 
-                TAMANIO = :TAMANIO, 
-                COLOR = :COLOR, 
-                PRECIOMULTIPLE = :PRECIOMULTIPLE, 
-                MONEDA = :MONEDA, 
-                PRECIODOLAR = :PRECIODOLAR, 
-                PRECIOVENTAUNIDAD = :PRECIOVENTAUNIDAD, 
-                PRECIOVENTAUNIDADDOS = :PRECIOVENTAUNIDADDOS, 
-                PRECIOVENTAUNIDADTRES = :PRECIOVENTAUNIDADTRES, 
-                DESCRIPCION = :DESCRIPCION, 
-                DEPOSITO = :DEPOSITO, 
-                UBICACION = :UBICACION, 
-                ESTADO = :ESTADO, 
-                IVA = :IVA, 
-                PRECIODECOSTO = :PRECIODECOSTO, 
-                STOCKDISPONIBLE = :STOCKDISPONIBLE, 
-                ULTIMOSTOCKCARGADO = :ULTIMOSTOCKCARGADO, 
-                UNIDADDEMEDIDAENTERO = :UNIDADDEMEDIDAENTERO, 
-                MEDIDAPESOENTERO = :MEDIDAPESOENTERO, 
-                PRECIOVENTA1KG1M = :PRECIOVENTA1KG1M, 
-                PRECIOVENTA100G50CM = :PRECIOVENTA100G50CM, 
-                UNIDADESVENDIDAS = :UNIDADESVENDIDAS, 
-                METROSKILOSVENDIDOS = :METROSKILOSVENDIDOS, 
-                VENTAPOR = :VENTAPOR, 
-                STOCKMINIMO = :STOCKMINIMO, 
-                FECHAVENCIMIENTO = :FECHAVENCIMIENTO, 
-                RUTAETIQUETAPRECIO = :RUTAETIQUETAPRECIO, 
-                DESCRIPCIONCOMPLETA = :DESCRIPCIONCOMPLETA, 
-                IDFOTOCATALOGO = :IDFOTOCATALOGO
-            WHERE idproducto = :idproducto";
-
-            // Asignar ID del producto al arreglo de datos
+            // Agregar ID del producto a $data
             $data['idproducto'] = $id;
+
+            // Lista de columnas que se actualizarán
+            $columns = [
+                'CODIGOARTICULO', 'CATEGORIA', 'SUBCATEGORIA', 'MARCA', 
+                'FECHAREGISTRO', 'TAMANIO', 'COLOR', 'PRECIOMULTIPLE', 
+                'MONEDA', 'PRECIODOLAR', 'PRECIOVENTAUNIDAD', 
+                'PRECIOVENTAUNIDADDOS', 'PRECIOVENTAUNIDADTRES', 'DESCRIPCION', 
+                'DEPOSITO', 'UBICACION', 'ESTADO', 'IVA', 'PRECIODECOSTO', 
+                'STOCKDISPONIBLE', 'ULTIMOSTOCKCARGADO', 'UNIDADDEMEDIDAENTERO', 
+                'MEDIDAPESOENTERO', 'PRECIOVENTA1KG1M', 'PRECIOVENTA100G50CM', 
+                'UNIDADESVENDIDAS', 'METROSKILOSVENDIDOS', 'VENTAPOR', 
+                'STOCKMINIMO', 'FECHAVENCIMIENTO', 'RUTAETIQUETAPRECIO', 
+                'DESCRIPCIONCOMPLETA', 'IDFOTOCATALOGO'
+            ];
+
+            // Crear consulta SQL dinámica
+            $set = implode(', ', array_map(fn($col) => "$col = :$col", $columns));
+
+            $sql = "UPDATE productos SET $set WHERE idproducto = :idproducto";
+
+            // Asegurarnos de que cada columna tenga un valor en $data
+            foreach ($columns as $col) {
+                if (!array_key_exists($col, $data)) {
+                    $data[$col] = null; // Asignar valor por defecto si falta
+                }
+            }
 
             // Ejecutar consulta SQL
             try {
