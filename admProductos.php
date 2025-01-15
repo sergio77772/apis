@@ -146,7 +146,7 @@ case 'PUT':
             // Agregar el ID del producto a los datos
             $data['idproducto'] = $id;
 
-            Depurar: mostrar datos y consulta generada (puedes eliminar esto en producción)
+           // Depurar: mostrar datos y consulta generada (puedes eliminar esto en producción)
              echo "<pre>Consulta SQL: $sql</pre>";
              echo "<pre>Datos: " . print_r($data, true) . "</pre>";
 
