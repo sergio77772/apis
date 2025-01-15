@@ -90,8 +90,9 @@ case 'PUT':
         $id = $_GET['id'] ?? null;
 
         if ($id) {
-            parse_str(file_get_contents("php://input"), $data); // Obtener datos del cuerpo de la solicitud
-            
+            // Leer los datos del cuerpo de la solicitud
+            parse_str(file_get_contents("php://input"), $data);
+
             // Convertir valores "null" a NULL
             foreach ($data as $key => $value) {
                 if ($value === "null") {
@@ -115,36 +116,40 @@ case 'PUT':
                 $data['IDFOTOCATALOGO'] = null; // Si no se sube imagen, asignar NULL
             }
 
-            // Agregar ID del producto a $data
-            $data['idproducto'] = $id;
-
-            // Lista de columnas que se actualizarán
+            // Lista de columnas actualizables
             $columns = [
-                'CODIGOARTICULO', 'CATEGORIA', 'SUBCATEGORIA', 'MARCA', 
-                'FECHAREGISTRO', 'TAMANIO', 'COLOR', 'PRECIOMULTIPLE', 
-                'MONEDA', 'PRECIODOLAR', 'PRECIOVENTAUNIDAD', 
-                'PRECIOVENTAUNIDADDOS', 'PRECIOVENTAUNIDADTRES', 'DESCRIPCION', 
-                'DEPOSITO', 'UBICACION', 'ESTADO', 'IVA', 'PRECIODECOSTO', 
-                'STOCKDISPONIBLE', 'ULTIMOSTOCKCARGADO', 'UNIDADDEMEDIDAENTERO', 
-                'MEDIDAPESOENTERO', 'PRECIOVENTA1KG1M', 'PRECIOVENTA100G50CM', 
-                'UNIDADESVENDIDAS', 'METROSKILOSVENDIDOS', 'VENTAPOR', 
-                'STOCKMINIMO', 'FECHAVENCIMIENTO', 'RUTAETIQUETAPRECIO', 
+                'CODIGOARTICULO', 'CATEGORIA', 'SUBCATEGORIA', 'MARCA',
+                'FECHAREGISTRO', 'TAMANIO', 'COLOR', 'PRECIOMULTIPLE',
+                'MONEDA', 'PRECIODOLAR', 'PRECIOVENTAUNIDAD',
+                'PRECIOVENTAUNIDADDOS', 'PRECIOVENTAUNIDADTRES', 'DESCRIPCION',
+                'DEPOSITO', 'UBICACION', 'ESTADO', 'IVA', 'PRECIODECOSTO',
+                'STOCKDISPONIBLE', 'ULTIMOSTOCKCARGADO', 'UNIDADDEMEDIDAENTERO',
+                'MEDIDAPESOENTERO', 'PRECIOVENTA1KG1M', 'PRECIOVENTA100G50CM',
+                'UNIDADESVENDIDAS', 'METROSKILOSVENDIDOS', 'VENTAPOR',
+                'STOCKMINIMO', 'FECHAVENCIMIENTO', 'RUTAETIQUETAPRECIO',
                 'DESCRIPCIONCOMPLETA', 'IDFOTOCATALOGO'
             ];
 
-            // Crear consulta SQL dinámica
-            $set = implode(', ', array_map(fn($col) => "$col = :$col", $columns));
-
-            $sql = "UPDATE productos SET $set WHERE idproducto = :idproducto";
-
-            // Asegurarnos de que cada columna tenga un valor en $data
-            foreach ($columns as $col) {
-                if (!array_key_exists($col, $data)) {
-                    $data[$col] = null; // Asignar valor por defecto si falta
+            // Generar dinámicamente la consulta SET
+            $set = [];
+            foreach ($columns as $column) {
+                $set[] = "$column = :$column";
+                if (!array_key_exists($column, $data)) {
+                    $data[$column] = null; // Asegurar que todas las columnas tienen un valor
                 }
             }
+            $setSql = implode(', ', $set);
 
-            // Ejecutar consulta SQL
+            // Consulta SQL final
+            $sql = "UPDATE productos SET $setSql WHERE idproducto = :idproducto";
+
+            // Agregar el ID del producto a los datos
+            $data['idproducto'] = $id;
+
+            // Depurar: mostrar datos y consulta generada (puedes eliminar esto en producción)
+            // echo "<pre>Consulta SQL: $sql</pre>";
+            // echo "<pre>Datos: " . print_r($data, true) . "</pre>";
+
             try {
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute($data);
