@@ -10,7 +10,6 @@ $method = $_SERVER['REQUEST_METHOD'];
 $endpoint = $_GET['endpoint'] ?? '';
 $page = $_GET['page'] ?? 1;
 $limit = $_GET['limit'] ?? 10;
-
 $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/img/'; // Directorio donde se guardarán las imágenes
 
 // Paginación
@@ -51,28 +50,35 @@ switch ($method) {
     case 'POST':
         if ($endpoint === 'productos') {
             $data = json_decode(file_get_contents('php://input'), true);
-            $sql = "INSERT INTO productos (CODIGOARTICULO, CATEGORIA, SUBCATEGORIA, MARCA, FECHAREGISTRO, TAMANIO, COLOR, PRECIOMULTIPLE, MONEDA, PRECIODOLAR, PRECIOVENTAUNIDAD, PRECIOVENTAUNIDADDOS, PRECIOVENTAUNIDADTRES, DESCRIPCION, DEPOSITO, UBICACION, ESTADO, IVA, PRECIODECOSTO, STOCKDISPONIBLE, ULTIMOSTOCKCARGADO, UNIDADDEMEDIDAENTERO, MEDIDAPESOENTERO, PRECIOVENTA1KG1M, PRECIOVENTA100G50CM, UNIDADESVENDIDAS, METROSKILOSVENDIDOS, VENTAPOR, STOCKMINIMO, FECHAVENCIMIENTO, RUTAETIQUETAPRECIO, DESCRIPCIONCOMPLETA, IDFOTOCATALOGO)
-                    VALUES (:CODIGOARTICULO, :CATEGORIA, :SUBCATEGORIA, :MARCA, :FECHAREGISTRO, :TAMANIO, :COLOR, :PRECIOMULTIPLE, :MONEDA, :PRECIODOLAR, :PRECIOVENTAUNIDAD, :PRECIOVENTAUNIDADDOS, :PRECIOVENTAUNIDADTRES, :DESCRIPCION, :DEPOSITO, :UBICACION, :ESTADO, :IVA, :PRECIODECOSTO, :STOCKDISPONIBLE, :ULTIMOSTOCKCARGADO, :UNIDADDEMEDIDAENTERO, :MEDIDAPESOENTERO, :PRECIOVENTA1KG1M, :PRECIOVENTA100G50CM, :UNIDADESVENDIDAS, :METROSKILOSVENDIDOS, :VENTAPOR, :STOCKMINIMO, :FECHAVENCIMIENTO, :RUTAETIQUETAPRECIO, :DESCRIPCIONCOMPLETA, :IDFOTOCATALOGO)";
+            $sql = "INSERT INTO productos (CODIGOARTICULO, CATEGORIA, SUBCATEGORIA, MARCA, FECHAREGISTRO, TAMANIO, COLOR, PRECIOMULTIPLE, MONEDA, PRECIODOLAR, 
+                    PRECIOVENTAUNIDAD, PRECIOVENTAUNIDADDOS, PRECIOVENTAUNIDADTRES, DESCRIPCION, DEPOSITO, UBICACION, ESTADO, IVA, PRECIODECOSTO, 
+                    STOCKDISPONIBLE, ULTIMOSTOCKCARGADO, UNIDADDEMEDIDAENTERO, MEDIDAPESOENTERO, PRECIOVENTA1KG1M, PRECIOVENTA100G50CM, UNIDADESVENDIDAS, 
+                    METROSKILOSVENDIDOS, VENTAPOR, STOCKMINIMO, FECHAVENCIMIENTO, RUTAETIQUETAPRECIO, DESCRIPCIONCOMPLETA, IDFOTOCATALOGO) 
+                    VALUES (:CODIGOARTICULO, :CATEGORIA, :SUBCATEGORIA, :MARCA, :FECHAREGISTRO, :TAMANIO, :COLOR, :PRECIOMULTIPLE, :MONEDA, :PRECIODOLAR, 
+                    :PRECIOVENTAUNIDAD, :PRECIOVENTAUNIDADDOS, :PRECIOVENTAUNIDADTRES, :DESCRIPCION, :DEPOSITO, :UBICACION, :ESTADO, :IVA, :PRECIODECOSTO, 
+                    :STOCKDISPONIBLE, :ULTIMOSTOCKCARGADO, :UNIDADDEMEDIDAENTERO, :MEDIDAPESOENTERO, :PRECIOVENTA1KG1M, :PRECIOVENTA100G50CM, 
+                    :UNIDADESVENDIDAS, :METROSKILOSVENDIDOS, :VENTAPOR, :STOCKMINIMO, :FECHAVENCIMIENTO, :RUTAETIQUETAPRECIO, :DESCRIPCIONCOMPLETA, 
+                    :IDFOTOCATALOGO)";
             $stmt = $pdo->prepare($sql);
             $stmt->execute($data);
             echo json_encode(['message' => 'Producto creado exitosamente']);
         } elseif ($endpoint === 'upload') {
+            // Subida de imagen
             if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
                 $file = $_FILES['image'];
                 $fileName = basename($file['name']);
                 $targetFilePath = $uploadDir . $fileName;
 
+                // Crear directorio si no existe
                 if (!is_dir($uploadDir)) {
                     mkdir($uploadDir, 0755, true);
                 }
 
+                // Validar el tipo de archivo
                 $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
                 if (in_array($file['type'], $allowedTypes)) {
                     if (move_uploaded_file($file['tmp_name'], $targetFilePath)) {
-                        echo json_encode([
-                            'message' => 'Imagen subida exitosamente',
-                            'filePath' => "/img/$fileName"
-                        ]);
+                        echo json_encode(['message' => 'Imagen subida exitosamente', 'filePath' => "/img/$fileName"]);
                     } else {
                         echo json_encode(['error' => 'Error al mover el archivo']);
                     }
@@ -80,75 +86,44 @@ switch ($method) {
                     echo json_encode(['error' => 'Tipo de archivo no permitido']);
                 }
             } else {
-                echo json_encode(['error' => 'Error al subir la imagen']);
+                echo json_encode(['error' => 'No se recibió un archivo válido']);
             }
         }
         break;
 
-case 'PUT':
-    if ($endpoint === 'productos') {
-        $id = $_GET['id'] ?? null;
+    case 'PUT':
+        if ($endpoint === 'productos') {
+            $id = $_GET['id'] ?? null;
+            if ($id) {
+                $data = json_decode(file_get_contents('php://input'), true);
+                $set = [];
+                foreach ($data as $key => $value) {
+                    if ($key !== 'idproducto') {
+                        $set[] = "$key = :$key";
+                    }
+                }
 
-        if ($id) {
-            // Capturar datos enviados en la solicitud
-            $data = $_POST; // Si estás usando form-data
-            // Si usas JSON:
-            // $data = json_decode(file_get_contents("php://input"), true);
-
-            // Imprimir los datos para depuración
-            if (empty($data)) {
-                echo json_encode(['error' => 'No se enviaron datos en la solicitud']);
-                exit;
-            }
-
-            // Manejar la carga de imagen (opcional)
-            if (isset($_FILES['IMAGE']) && $_FILES['IMAGE']['error'] === UPLOAD_ERR_OK) {
-                $file = $_FILES['IMAGE'];
-                $fileName = basename($file['name']);
-                $targetFilePath = $uploadDir . $fileName;
-
-                if (move_uploaded_file($file['tmp_name'], $targetFilePath)) {
-                    $data['IDFOTOCATALOGO'] = "/img/$fileName"; // Ruta relativa de la imagen
-                } else {
-                    echo json_encode(['error' => 'Error al subir la imagen']);
+                if (empty($set)) {
+                    echo json_encode(['error' => 'No se enviaron campos para actualizar']);
                     exit;
                 }
-            }
 
-            // Generar la consulta SET dinámicamente según los datos recibidos
-            $set = [];
-            foreach ($data as $key => $value) {
-                if ($key !== 'idproducto') { // Excluir ID de la consulta SET
-                    $set[] = "$key = :$key";
+                $setSql = implode(', ', $set);
+                $sql = "UPDATE productos SET $setSql WHERE idproducto = :idproducto";
+                $data['idproducto'] = $id;
+
+                try {
+                    $stmt = $pdo->prepare($sql);
+                    $stmt->execute($data);
+                    echo json_encode(['message' => 'Producto actualizado exitosamente']);
+                } catch (PDOException $e) {
+                    echo json_encode(['error' => $e->getMessage()]);
                 }
+            } else {
+                echo json_encode(['error' => 'ID no proporcionado']);
             }
-
-            // Verificar que haya al menos un campo para actualizar
-            if (empty($set)) {
-                echo json_encode(['error' => 'No se enviaron campos para actualizar']);
-                exit;
-            }
-
-            $setSql = implode(', ', $set);
-            $sql = "UPDATE productos SET $setSql WHERE idproducto = :idproducto";
-
-            // Agregar el ID del producto a los datos
-            $data['idproducto'] = $id;
-
-            try {
-                $stmt = $pdo->prepare($sql);
-                $stmt->execute($data);
-                echo json_encode(['message' => 'Producto actualizado exitosamente']);
-            } catch (PDOException $e) {
-                echo json_encode(['error' => $e->getMessage()]);
-            }
-        } else {
-            echo json_encode(['error' => 'ID no proporcionado']);
         }
-    }
-    break;
-
-
+        break;
 
     case 'DELETE':
         if ($endpoint === 'productos') {
