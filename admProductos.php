@@ -90,10 +90,10 @@ case 'PUT':
         $id = $_GET['id'] ?? null;
 
         if ($id) {
-            // Leer los datos del cuerpo de la solicitud
-            parse_str(file_get_contents("php://input"), $data);
+            // Usar $_POST en lugar de parse_str para multipart/form-data
+            $data = $_POST;
 
-            // Convertir valores "null" a NULL
+            // Convertir valores "null" explícitos a NULL
             foreach ($data as $key => $value) {
                 if ($value === "null") {
                     $data[$key] = null;
@@ -145,10 +145,6 @@ case 'PUT':
 
             // Agregar el ID del producto a los datos
             $data['idproducto'] = $id;
-
-           // Depurar: mostrar datos y consulta generada (puedes eliminar esto en producción)
-             echo "<pre>Consulta SQL: $sql</pre>";
-             echo "<pre>Datos: " . print_r($data, true) . "</pre>";
 
             try {
                 $stmt = $pdo->prepare($sql);
