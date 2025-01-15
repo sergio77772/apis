@@ -85,11 +85,9 @@ switch ($method) {
         }
         break;
 
-
 case 'PUT':
     if ($endpoint === 'productos') {
-
-function debugSql($sql, $data) {
+        function debugSql($sql, $data) {
     foreach ($data as $key => $value) {
         // Aseguramos que el valor esté bien formateado para la consulta SQL
         if (is_string($value)) {
@@ -101,8 +99,6 @@ function debugSql($sql, $data) {
     }
     return $sql;
 }
-
-        
         $id = $_GET['id'] ?? null;
         if ($id) {
             // Obtener datos del formulario
@@ -121,6 +117,9 @@ function debugSql($sql, $data) {
                     exit;
                 }
             }
+
+            // Depuración: ver los datos antes de ejecutar la consulta
+            echo "<pre>Datos antes de la consulta SQL: " . print_r($data, true) . "</pre>";
 
             // Consulta SQL para actualizar el producto
             $sql = "UPDATE productos SET 
@@ -158,7 +157,7 @@ function debugSql($sql, $data) {
                 DESCRIPCIONCOMPLETA = :DESCRIPCIONCOMPLETA, 
                 IDFOTOCATALOGO = :IDFOTOCATALOGO 
             WHERE idproducto = :idproducto";
-            
+
             // Asignar el idproducto a los datos
             $data['idproducto'] = $id;
 
