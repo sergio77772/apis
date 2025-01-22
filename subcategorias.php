@@ -17,11 +17,11 @@ $offset = ($page - 1) * $limit;
 
 switch ($method) {
     case 'GET':
-        if ($endpoint === 'categoria') {
+        if ($endpoint === 'subcategoria') {
             $search = $_GET['search'] ?? '';
 
             // Obtener el total de registros
-            $countSql = "SELECT COUNT(*) as total FROM categoria_web WHERE nombre LIKE :search";
+            $countSql = "SELECT COUNT(*) as total FROM subcategoria_web WHERE nombre LIKE :search";
             $countStmt = $pdo->prepare($countSql);
             $countStmt->bindValue(':search', "%$search%");
             $countStmt->execute();
@@ -31,8 +31,8 @@ switch ($method) {
             $totalPages = ceil($total / $limit);
 
             // Obtener los registros
-            $sql = "SELECT idcategoria, nombre, estado, imagen
-                    FROM categoria_web 
+            $sql = "SELECT idsubcategoria, nombre, estado, imagen
+                    FROM subcategoria_web 
                     WHERE nombre LIKE :search 
                     LIMIT :limit OFFSET :offset";
             $stmt = $pdo->prepare($sql);
@@ -44,7 +44,7 @@ switch ($method) {
 
             // Respuesta JSON
             echo json_encode([
-                'categories' => $result,
+                'subcategoria' => $result,
                 'total' => $total,
                 'totalPages' => $totalPages,
                 'currentPage' => (int)$page,
@@ -53,9 +53,9 @@ switch ($method) {
         break;
 
     case 'POST':
-        if ($endpoint === 'categoria') {
+        if ($endpoint === 'subcategoria') {
             $data = json_decode(file_get_contents('php://input'), true);
-            $sql = "INSERT INTO categoria_web (nombre, estado, imagen)
+            $sql = "INSERT INTO subcategoria_web (nombre, estado, imagen)
                     VALUES (:nombre, :estado, :imagen)";
             $stmt = $pdo->prepare($sql);
             $stmt->execute($data);
@@ -90,14 +90,14 @@ switch ($method) {
         break;
 
     case 'PUT':
-        if ($endpoint === 'categoria') {
+        if ($endpoint === 'subcategoria') {
             $id = $_GET['id'] ?? null;
             if ($id) {
                 $data = json_decode(file_get_contents('php://input'), true);
-                $sql = "UPDATE categoria_web 
+                $sql = "UPDATE subcategoria_web 
                         SET nombre = :nombre, estado = :estado, imagen = :imagen
-                        WHERE idcategoria = :idcategoria";
-                $data['idcategoria'] = $id;
+                        WHERE idsubcategoria = :idsubcategoria";
+                $data['idsubcategoria'] = $id;
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute($data);
                 echo json_encode(['message' => 'Categoría actualizada exitosamente']);
@@ -108,13 +108,13 @@ switch ($method) {
         break;
 
     case 'DELETE':
-        if ($endpoint === 'categoria') {
+        if ($endpoint === 'subcategoria') {
             $id = $_GET['id'] ?? null;
             if ($id) {
-                $sql = "DELETE FROM categoria_web WHERE idcategoria = :idcategoria";
+                $sql = "DELETE FROM subcategoria_web WHERE idsubcategoria = :idsubcategoria";
                 $stmt = $pdo->prepare($sql);
-                $stmt->execute(['idcategoria' => $id]);
-                echo json_encode(['message' => 'Categoría eliminada exitosamente']);
+                $stmt->execute(['idsubcategoria' => $id]);
+                echo json_encode(['message' => 'SubCategoría eliminada exitosamente']);
             } else {
                 echo json_encode(['error' => 'ID no proporcionado']);
             }
