@@ -3,105 +3,60 @@ header("Content-Type: application/json");
 require 'db.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
-
-// Obtener datos JSON del cuerpo de la solicitud
 $data = json_decode(file_get_contents("php://input"), true);
 
-switch ($method) {
-    case 'POST':
-        // Crear usuario
-        if (isset($_GET['action']) && $_GET['action'] === 'register') {
-            registerUser($data);
-        } elseif (isset($_GET['action']) && $_GET['action'] === 'login') {
-            loginUser($data);
+if ($method === 'POST') {
+    if (isset($_GET['action']) && $_GET['action'] === 'register') {
+        if (empty($data['correo']) || empty($data['nombre']) || empty($data['password'])) {
+            echo json_encode(["error" => "Campos obligatorios faltantes"]);
+            exit;
         }
-        break;
 
-    case 'GET':
-        // Obtener usuarios
-        getUsers();
-        break;
+        $correo = $data['correo'];
+        $nombre = $data['nombre'];
+        $password = password_hash($data['password'], PASSWORD_BCRYPT);
+        $direccion = isset($data['direccion']) ? $data['direccion'] : null;
 
-    case 'PUT':
-        // Actualizar usuario
-        updateUser($data);
-        break;
-
-    case 'DELETE':
-        // Eliminar usuario
-        if (isset($_GET['id'])) {
-            deleteUser($_GET['id']);
-        } else {
-            echo json_encode(["error" => "ID requerido"]);
+        try {
+            $sql = "INSERT INTO users_web (correo, nombre, password, direccion) VALUES (:correo, :nombre, :password, :direccion)";
+            $stmt = $conn->prepare($sql);
+            $stmt->execute([
+                ':correo' => $correo,
+                ':nombre' => $nombre,
+                ':password' => $password,
+                ':direccion' => $direccion
+            ]);
+            echo json_encode(["success" => "Usuario registrado"]);
+        } catch (PDOException $e) {
+            echo json_encode(["error" => $e->getMessage()]);
         }
-        break;
 
-    default:
-        echo json_encode(["error" => "Método no permitido"]);
-        break;
-}
-
-// Función para registrar un usuario
-function registerUser($data) {
-    global $conn;
-
-    if (empty($data['correo']) || empty($data['nombre']) || empty($data['password'])) {
-        echo json_encode(["error" => "Campos obligatorios faltantes"]);
-        return;
-    }
-
-    $correo = $data['correo'];
-    $nombre = $data['nombre'];
-    $password = password_hash($data['password'], PASSWORD_BCRYPT);
-    $direccion = isset($data['direccion']) ? $data['direccion'] : null;
-
-    try {
-        $sql = "INSERT INTO users_web (correo, nombre, password, direccion) VALUES (:correo, :nombre, :password, :direccion)";
-        $stmt = $conn->prepare($sql);
-        $stmt->execute([
-            ':correo' => $correo,
-            ':nombre' => $nombre,
-            ':password' => $password,
-            ':direccion' => $direccion
-        ]);
-        echo json_encode(["success" => "Usuario registrado"]);
-    } catch (PDOException $e) {
-        echo json_encode(["error" => $e->getMessage()]);
-    }
-}
-
-// Función para iniciar sesión
-function loginUser($data) {
-    global $conn;
-
-    if (empty($data['correo']) || empty($data['password'])) {
-        echo json_encode(["error" => "Correo y contraseña son obligatorios"]);
-        return;
-    }
-
-    $correo = $data['correo'];
-    $password = $data['password'];
-
-    try {
-        $sql = "SELECT * FROM users_web WHERE correo = :correo";
-        $stmt = $conn->prepare($sql);
-        $stmt->execute([':correo' => $correo]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($user && password_verify($password, $user['password'])) {
-            echo json_encode(["success" => "Inicio de sesión exitoso", "user" => $user]);
-        } else {
-            echo json_encode(["error" => "Credenciales inválidas"]);
+    } elseif (isset($_GET['action']) && $_GET['action'] === 'login') {
+        if (empty($data['correo']) || empty($data['password'])) {
+            echo json_encode(["error" => "Correo y contraseña son obligatorios"]);
+            exit;
         }
-    } catch (PDOException $e) {
-        echo json_encode(["error" => $e->getMessage()]);
+
+        $correo = $data['correo'];
+        $password = $data['password'];
+
+        try {
+            $sql = "SELECT * FROM users_web WHERE correo = :correo";
+            $stmt = $conn->prepare($sql);
+            $stmt->execute([':correo' => $correo]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($user && password_verify($password, $user['password'])) {
+                echo json_encode(["success" => "Inicio de sesión exitoso", "user" => $user]);
+            } else {
+                echo json_encode(["error" => "Credenciales inválidas"]);
+            }
+        } catch (PDOException $e) {
+            echo json_encode(["error" => $e->getMessage()]);
+        }
     }
-}
 
-// Función para obtener usuarios
-function getUsers() {
-    global $conn;
-
+} elseif ($method === 'GET') {
     try {
         $sql = "SELECT id, correo, nombre, direccion FROM users_web";
         $stmt = $conn->query($sql);
@@ -110,15 +65,11 @@ function getUsers() {
     } catch (PDOException $e) {
         echo json_encode(["error" => $e->getMessage()]);
     }
-}
 
-// Función para actualizar usuario
-function updateUser($data) {
-    global $conn;
-
+} elseif ($method === 'PUT') {
     if (empty($data['id']) || empty($data['nombre']) || empty($data['correo'])) {
         echo json_encode(["error" => "ID, correo y nombre son obligatorios"]);
-        return;
+        exit;
     }
 
     $id = $data['id'];
@@ -139,11 +90,14 @@ function updateUser($data) {
     } catch (PDOException $e) {
         echo json_encode(["error" => $e->getMessage()]);
     }
-}
 
-// Función para eliminar usuario
-function deleteUser($id) {
-    global $conn;
+} elseif ($method === 'DELETE') {
+    if (!isset($_GET['id'])) {
+        echo json_encode(["error" => "ID requerido"]);
+        exit;
+    }
+
+    $id = $_GET['id'];
 
     try {
         $sql = "DELETE FROM users_web WHERE id = :id";
@@ -153,5 +107,8 @@ function deleteUser($id) {
     } catch (PDOException $e) {
         echo json_encode(["error" => $e->getMessage()]);
     }
+
+} else {
+    echo json_encode(["error" => "Método no permitido"]);
 }
 ?>
