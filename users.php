@@ -3,13 +3,18 @@ header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *'); 
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
-require 'db.php';
+
+require 'db.php'; // Asegúrate de que la ruta es correcta
 $method = $_SERVER['REQUEST_METHOD'];
 $data = json_decode(file_get_contents("php://input"), true);
+
+// Manejo de conexión PDO
+global $pdo;
 
 if ($method === 'POST') {
     if (isset($_GET['action']) && $_GET['action'] === 'register') {
         if (empty($data['correo']) || empty($data['nombre']) || empty($data['password'])) {
+            http_response_code(400);
             echo json_encode(["error" => "Campos obligatorios faltantes"]);
             exit;
         }
@@ -20,21 +25,25 @@ if ($method === 'POST') {
         $direccion = isset($data['direccion']) ? $data['direccion'] : null;
 
         try {
-            $sql = "INSERT INTO users_web (correo, nombre, password, direccion) VALUES (:correo, :nombre, :password, :direccion)";
-            $stmt = $conn->prepare($sql);
+            $sql = "INSERT INTO users_web (correo, nombre, password, direccion) 
+                    VALUES (:correo, :nombre, :password, :direccion)";
+            $stmt = $pdo->prepare($sql);
             $stmt->execute([
                 ':correo' => $correo,
                 ':nombre' => $nombre,
                 ':password' => $password,
                 ':direccion' => $direccion
             ]);
+            http_response_code(201);
             echo json_encode(["success" => "Usuario registrado"]);
         } catch (PDOException $e) {
-            echo json_encode(["error" => $e->getMessage()]);
+            http_response_code(500);
+            echo json_encode(["error" => "Error interno del servidor"]);
         }
 
     } elseif (isset($_GET['action']) && $_GET['action'] === 'login') {
         if (empty($data['correo']) || empty($data['password'])) {
+            http_response_code(400);
             echo json_encode(["error" => "Correo y contraseña son obligatorios"]);
             exit;
         }
@@ -44,32 +53,36 @@ if ($method === 'POST') {
 
         try {
             $sql = "SELECT * FROM users_web WHERE correo = :correo";
-            $stmt = $conn->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->execute([':correo' => $correo]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($user && password_verify($password, $user['password'])) {
+                http_response_code(200);
                 echo json_encode(["success" => "Inicio de sesión exitoso", "user" => $user]);
             } else {
+                http_response_code(401);
                 echo json_encode(["error" => "Credenciales inválidas"]);
             }
         } catch (PDOException $e) {
-            echo json_encode(["error" => $e->getMessage()]);
+            http_response_code(500);
+            echo json_encode(["error" => "Error interno del servidor"]);
         }
     }
-
 } elseif ($method === 'GET') {
     try {
         $sql = "SELECT id, correo, nombre, direccion FROM users_web";
-        $stmt = $conn->query($sql);
+        $stmt = $pdo->query($sql);
         $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        http_response_code(200);
         echo json_encode($users);
     } catch (PDOException $e) {
-        echo json_encode(["error" => $e->getMessage()]);
+        http_response_code(500);
+        echo json_encode(["error" => "Error interno del servidor"]);
     }
-
 } elseif ($method === 'PUT') {
     if (empty($data['id']) || empty($data['nombre']) || empty($data['correo'])) {
+        http_response_code(400);
         echo json_encode(["error" => "ID, correo y nombre son obligatorios"]);
         exit;
     }
@@ -80,21 +93,24 @@ if ($method === 'POST') {
     $direccion = isset($data['direccion']) ? $data['direccion'] : null;
 
     try {
-        $sql = "UPDATE users_web SET correo = :correo, nombre = :nombre, direccion = :direccion WHERE id = :id";
-        $stmt = $conn->prepare($sql);
+        $sql = "UPDATE users_web SET correo = :correo, nombre = :nombre, direccion = :direccion 
+                WHERE id = :id";
+        $stmt = $pdo->prepare($sql);
         $stmt->execute([
             ':correo' => $correo,
             ':nombre' => $nombre,
             ':direccion' => $direccion,
             ':id' => $id
         ]);
+        http_response_code(200);
         echo json_encode(["success" => "Usuario actualizado"]);
     } catch (PDOException $e) {
-        echo json_encode(["error" => $e->getMessage()]);
+        http_response_code(500);
+        echo json_encode(["error" => "Error interno del servidor"]);
     }
-
 } elseif ($method === 'DELETE') {
     if (!isset($_GET['id'])) {
+        http_response_code(400);
         echo json_encode(["error" => "ID requerido"]);
         exit;
     }
@@ -103,14 +119,15 @@ if ($method === 'POST') {
 
     try {
         $sql = "DELETE FROM users_web WHERE id = :id";
-        $stmt = $conn->prepare($sql);
+        $stmt = $pdo->prepare($sql);
         $stmt->execute([':id' => $id]);
+        http_response_code(200);
         echo json_encode(["success" => "Usuario eliminado"]);
     } catch (PDOException $e) {
-        echo json_encode(["error" => $e->getMessage()]);
+        http_response_code(500);
+        echo json_encode(["error" => "Error interno del servidor"]);
     }
-
 } else {
+    http_response_code(405);
     echo json_encode(["error" => "Método no permitido"]);
 }
-?>
