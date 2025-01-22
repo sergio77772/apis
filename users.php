@@ -56,7 +56,7 @@ function registerUser($data) {
     $direccion = isset($data['direccion']) ? $data['direccion'] : null;
 
     try {
-        $sql = "INSERT INTO users (correo, nombre, password, direccion) VALUES (:correo, :nombre, :password, :direccion)";
+        $sql = "INSERT INTO users_web (correo, nombre, password, direccion) VALUES (:correo, :nombre, :password, :direccion)";
         $stmt = $conn->prepare($sql);
         $stmt->execute([
             ':correo' => $correo,
@@ -83,7 +83,7 @@ function loginUser($data) {
     $password = $data['password'];
 
     try {
-        $sql = "SELECT * FROM users WHERE correo = :correo";
+        $sql = "SELECT * FROM users_web WHERE correo = :correo";
         $stmt = $conn->prepare($sql);
         $stmt->execute([':correo' => $correo]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -103,7 +103,7 @@ function getUsers() {
     global $conn;
 
     try {
-        $sql = "SELECT id, correo, nombre, direccion FROM users";
+        $sql = "SELECT id, correo, nombre, direccion FROM users_web";
         $stmt = $conn->query($sql);
         $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
         echo json_encode($users);
@@ -127,7 +127,7 @@ function updateUser($data) {
     $direccion = isset($data['direccion']) ? $data['direccion'] : null;
 
     try {
-        $sql = "UPDATE users SET correo = :correo, nombre = :nombre, direccion = :direccion WHERE id = :id";
+        $sql = "UPDATE users_web SET correo = :correo, nombre = :nombre, direccion = :direccion WHERE id = :id";
         $stmt = $conn->prepare($sql);
         $stmt->execute([
             ':correo' => $correo,
@@ -146,7 +146,7 @@ function deleteUser($id) {
     global $conn;
 
     try {
-        $sql = "DELETE FROM users WHERE id = :id";
+        $sql = "DELETE FROM users_web WHERE id = :id";
         $stmt = $conn->prepare($sql);
         $stmt->execute([':id' => $id]);
         echo json_encode(["success" => "Usuario eliminado"]);
