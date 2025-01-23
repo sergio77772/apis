@@ -70,12 +70,39 @@ if ($method === 'POST') {
         }
     }
 } elseif ($method === 'GET') {
+    // Valores predeterminados para paginación y búsqueda
+    $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+    $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
+    $search = isset($_GET['search']) ? $_GET['search'] : '';
+    $offset = ($page - 1) * $limit;
+
     try {
-        $sql = "SELECT id, correo, nombre, direccion FROM users_web";
-        $stmt = $pdo->query($sql);
+        // Contar el total de usuarios para paginación
+        $countSql = "SELECT COUNT(*) as total FROM users_web WHERE nombre LIKE :search OR correo LIKE :search";
+        $countStmt = $pdo->prepare($countSql);
+        $countStmt->execute([':search' => '%' . $search . '%']);
+        $total = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+        // Obtener usuarios con límite, offset y búsqueda
+        $sql = "SELECT id, correo, nombre, direccion 
+                FROM users_web 
+                WHERE nombre LIKE :search OR correo LIKE :search 
+                LIMIT :limit OFFSET :offset";
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':search', '%' . $search . '%', PDO::PARAM_STR);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
         $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Respuesta con datos paginados
         http_response_code(200);
-        echo json_encode($users);
+        echo json_encode([
+            "total" => $total,
+            "page" => $page,
+            "limit" => $limit,
+            "data" => $users
+        ]);
     } catch (PDOException $e) {
         http_response_code(500);
         echo json_encode(["error" => "Error interno del servidor"]);
