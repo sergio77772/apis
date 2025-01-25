@@ -4,6 +4,7 @@ require __DIR__ . '/emails/PHPMailer.php';
 require __DIR__ . '/emails/SMTP.php';
 require __DIR__ . '/emails/Exception.php';
 
+
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
