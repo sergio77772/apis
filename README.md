@@ -12,4 +12,4 @@ try {
 }
 ?> 
 
-crear localmente db.php
+
