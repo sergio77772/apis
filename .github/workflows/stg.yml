@@ -23,4 +23,6 @@ jobs:
         server-dir: public_html/distribuidora/apis/  # Asegúrate de que termine con '/'
         exclude: |
           db.php      # Ignorar el archivo db.php en la raíz
+          .git        # Ignorar la carpeta .git
+          .git/**     # Ignorar todo el contenido de la carpeta .git
 
