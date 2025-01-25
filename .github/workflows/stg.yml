@@ -21,6 +21,6 @@ jobs:
         password: 19tozuBUno
         local-dir: ./  # Subir todo el contenido del repositorio
         server-dir: public_html/distribuidora/apis/  # Asegúrate de que termine con '/'
-        excludes: |
-          **/db.php  # Ignorar el archivo db.php en cualquier directorio
+        exclude: |
+          db.php  # Ignorar el archivo db.php en la raíz
 
