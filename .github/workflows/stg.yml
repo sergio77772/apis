@@ -26,4 +26,4 @@ jobs:
           .git         # Ignorar la carpeta .git
           .git/**      # Ignorar todo el contenido de .git
           .git/*       # Ignorar subdirectorios y archivos dentro de .git
-        dry-run: flse  # Habilitar simulación para verificar exclusiones
+        dry-run: false  # Habilitar simulación para verificar exclusiones
