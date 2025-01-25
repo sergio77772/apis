@@ -1,4 +1,5 @@
 name: Deploy PHP Project to FTP Server
+
 on:
   push:
     branches:
@@ -12,21 +13,11 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v3
 
-    - name: Set up PHP
-      uses: shivammathur/setup-php@v2
-      with:
-        php-version: '8.0'  # Cambia a la versión de PHP que estés utilizando
-
-    - name: Install Dependencies
-      run: |
-        # Si usas Composer, instala dependencias
-        composer install
-
     - name: Deploy to FTP Server
       uses: SamKirkland/FTP-Deploy-Action@4.3.0
       with:
         server: c2651511.ferozo.com  # El servidor FTP (sin "ftp://")
         username: ${{ secrets.FTP_USERNAME }}
         password: ${{ secrets.FTP_PASSWORD }}
-        local-dir: .  # Subir todo el contenido del repositorio (cambiar si solo deseas ciertos archivos)
+        local-dir: ./  # Subir todo el contenido del repositorio (puedes cambiar esta ruta si necesitas solo ciertos archivos)
         server-dir: ${{ secrets.FTP_REMOTE_DIR }}/apis  # Carpeta remota donde quieres subir los archivos
