@@ -26,6 +26,4 @@ jobs:
           .git         # Ignorar la carpeta .git
           .git/**      # Ignorar todo el contenido de .git
           .git/*       # Ignorar subdirectorios y archivos dentro de .git
-        log-level: verbose  # Mostrar detalles en los logs
-        dangerous-clean-slate: true  # Limpiar el directorio remoto antes de subir archivos
-        dry-run: true  # Habilitar simulación para verificar exclusiones
+        dry-run: flse  # Habilitar simulación para verificar exclusiones
