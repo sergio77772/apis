@@ -1,4 +1,4 @@
-name: Deploy PHP Project to FTP Server
+name: Deploy PHP Project to FTP Prod
 
 on:
   push:
