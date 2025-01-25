@@ -17,11 +17,11 @@ $offset = ($page - 1) * $limit;
 
 switch ($method) {
     case 'GET':
-        if ($endpoint === 'producto') {
+        if ($endpoint === 'bitacora') {
             $search = $_GET['search'] ?? '';
 
             // Obtener el total de registros
-            $countSql = "SELECT COUNT(*) as total FROM productos_web WHERE descripcion LIKE :search";
+            $countSql = "SELECT COUNT(*) as total FROM bitacora_web WHERE usuario LIKE :search";
             $countStmt = $pdo->prepare($countSql);
             $countStmt->bindValue(':search', "%$search%");
             $countStmt->execute();
@@ -31,9 +31,9 @@ switch ($method) {
             $totalPages = ceil($total / $limit);
 
             // Obtener los registros
-            $sql = "SELECT idproducto,idcategoria,idsubcategoria,idproveedor, descripcion,precioventa,preciocosto,deposito,ubicacion,stockmin,stock,stockmax,descripcioncompleta,codigoArticulo, estado, nivel, imagen
-                    FROM productos_web 
-                    WHERE descripcion LIKE :search 
+            $sql = "SELECT idbitacora, fechahora, usuario,modulo,mensaje, imagen
+                    FROM bitacora_web 
+                    WHERE usuario LIKE :search 
                     LIMIT :limit OFFSET :offset";
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':search', "%$search%");
@@ -44,7 +44,7 @@ switch ($method) {
 
             // Respuesta JSON
             echo json_encode([
-                'producto' => $result,
+                'bitacora' => $result,
                 'total' => $total,
                 'totalPages' => $totalPages,
                 'currentPage' => (int)$page,
@@ -53,10 +53,10 @@ switch ($method) {
         break;
 
     case 'POST':
-        if ($endpoint === 'producto') {
+        if ($endpoint === 'bitacora') {
             $data = json_decode(file_get_contents('php://input'), true);
-            $sql = "INSERT INTO productos_web (idcategoria,idsubcategoria,idproveedor,descripcion,,precioventa,preciocosto,deposito,ubicacion,stockmin,stock,stockmax,descripcioncompleta,codigoArticulo, estado,nivel, imagen)
-                    VALUES (:idcategoria,:idsubcategoria,:idproveedor,:descripcion,:precioventa,:preciocosto,:deposito,:ubicacion,:stockmin,:stock,:stockmax,:descripcioncompleta,:codigoArticulo, :estado, :nivel, :imagen)";
+            $sql = "INSERT INTO bitacora_web (nombre, estado, imagen)
+                    VALUES (:nombre, :estado, :imagen)";
             $stmt = $pdo->prepare($sql);
             $stmt->execute($data);
             echo json_encode(['message' => 'Categoría creada exitosamente']);
@@ -90,17 +90,17 @@ switch ($method) {
         break;
 
     case 'PUT':
-        if ($endpoint === 'producto') {
+        if ($endpoint === 'bitacora') {
             $id = $_GET['id'] ?? null;
             if ($id) {
                 $data = json_decode(file_get_contents('php://input'), true);
-                $sql = "UPDATE productos_web 
-                        SET idcategoria = :idcategoria ,idsubcategoria=:idsubcategoria,idproveedor = :idproveedor,descripcion = :descripcion,precioventa=:precioventa,preciocosto =:preciocosto,deposito =:deposito,ubicacion =:ubicacion,stockmin=:stockmin,stock=:stock,stockmax=:stockmax,descripcioncompleta=:descripcioncompleta,codigoArticulo=:codigoArticulo ,estado = :estado, nivel = :nivel, imagen = :imagen
-                        WHERE idproducto = :idproducto";
-                $data['idproducto'] = $id;
+                $sql = "UPDATE bitacora_web 
+                        SET fecha_hora = :fecha_hora, usuario = :usuario,modulo =:modulo,mensaje = :mensaje, imagen = :imagen
+                        WHERE idbitacora = :idbitacora";
+                $data['idbitacora'] = $id;
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute($data);
-                echo json_encode(['message' => 'Producto actualizada exitosamente']);
+                echo json_encode(['message' => 'Categoría actualizada exitosamente']);
             } else {
                 echo json_encode(['error' => 'ID no proporcionado']);
             }
@@ -108,13 +108,13 @@ switch ($method) {
         break;
 
     case 'DELETE':
-        if ($endpoint === 'producto') {
+        if ($endpoint === 'bitacora') {
             $id = $_GET['id'] ?? null;
             if ($id) {
-                $sql = "DELETE FROM productos_web WHERE idproducto = :idproducto";
+                $sql = "DELETE FROM bitacora_web WHERE idbitacora = :idbitacora";
                 $stmt = $pdo->prepare($sql);
-                $stmt->execute(['idproducto' => $id]);
-                echo json_encode(['message' => 'Producto eliminada exitosamente']);
+                $stmt->execute(['idbitacora' => $id]);
+                echo json_encode(['message' => 'Categoría eliminada exitosamente']);
             } else {
                 echo json_encode(['error' => 'ID no proporcionado']);
             }

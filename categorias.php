@@ -49,6 +49,26 @@ switch ($method) {
                 'totalPages' => $totalPages,
                 'currentPage' => (int)$page,
             ]);
+
+       // BEGIN BITACORA 
+        // Generar la fecha y hora actual en el formato adecuado
+        $fecha_hora_actual = date('Y-m-d H:i:s');
+        // Crear el mensaje concatenando los valores de $data
+         $mensaje = "ingreso a Categoria";
+           $bitacora_data = [
+            'fechahora' => $fecha_hora_actual, 
+             'usuario' => 'Brenda',
+             'modulo' => 'listado de categoria',
+             'mensaje' => $mensaje      // Mensaje personalizado
+          ];
+         $sql1 = "INSERT INTO bitacora_web (fechahora, usuario, modulo, mensaje)
+              VALUES (:fechahora, :usuario, :modulo, :mensaje)";
+         $stmt1 = $pdo->prepare($sql1);
+         $stmt1->execute($bitacora_data);
+            // END BITACORA
+
+
+
         }
         break;
 
@@ -56,10 +76,34 @@ switch ($method) {
         if ($endpoint === 'categoria') {
             $data = json_decode(file_get_contents('php://input'), true);
             $sql = "INSERT INTO categoria_web (nombre, estado, imagen)
-                    VALUES (:nombre, :estado, :imagen)";
+            VALUES (:nombre, :estado, :imagen)";
             $stmt = $pdo->prepare($sql);
             $stmt->execute($data);
+
+
+  // BEGIN BITACORA 
+        // Generar la fecha y hora actual en el formato adecuado
+         $fecha_hora_actual = date('Y-m-d H:i:s');
+        // Crear el mensaje concatenando los valores de $data
+         $mensaje = $data['nombre'] . ' , ' . $data['estado'] . ' , ' . $data['imagen'];
+           $bitacora_data = [
+            'fechahora' => $fecha_hora_actual, 
+             'usuario' => 'Brenda',
+             'modulo' => 'nueva categoria',
+             'mensaje' => $mensaje      // Mensaje personalizado
+          ];
+         $sql1 = "INSERT INTO bitacora_web (fechahora, usuario, modulo, mensaje)
+              VALUES (:fechahora, :usuario, :modulo, :mensaje)";
+         $stmt1 = $pdo->prepare($sql1);
+         $stmt1->execute($bitacora_data);
+            // END BITACORA
+
             echo json_encode(['message' => 'Categoría creada exitosamente']);
+
+
+
+
+
         } elseif ($endpoint === 'upload') {
             // Subida de imagen
             if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
@@ -100,6 +144,26 @@ switch ($method) {
                 $data['idcategoria'] = $id;
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute($data);
+
+                // BEGIN BITACORA 
+        // Generar la fecha y hora actual en el formato adecuado
+         $fecha_hora_actual = date('Y-m-d H:i:s');
+         // Crear el mensaje concatenando los valores de $data
+          $mensaje = $data['nombre'] . ' , ' . $data['estado'] . ' , ' . $data['imagen'];
+            $bitacora_data = [
+             'fechahora' => $fecha_hora_actual, 
+              'usuario' => 'Brenda',
+              'modulo' => 'Editar categoria',
+              'mensaje' => $mensaje      // Mensaje personalizado
+           ];
+          $sql1 = "INSERT INTO bitacora_web (fechahora, usuario, modulo, mensaje)
+               VALUES (:fechahora, :usuario, :modulo, :mensaje)";
+          $stmt1 = $pdo->prepare($sql1);
+          $stmt1->execute($bitacora_data);
+             // END BITACORA
+
+
+
                 echo json_encode(['message' => 'Categoría actualizada exitosamente']);
             } else {
                 echo json_encode(['error' => 'ID no proporcionado']);
@@ -114,6 +178,33 @@ switch ($method) {
                 $sql = "DELETE FROM categoria_web WHERE idcategoria = :idcategoria";
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute(['idcategoria' => $id]);
+
+    // BEGIN BITACORA   
+    //falta usuario y mensaje
+        // Generar la fecha y hora actual en el formato adecuado
+        $fecha_hora_actual = date('Y-m-d H:i:s');
+        // Crear el mensaje concatenando los valores de $data
+         $mensaje = $id;
+           $bitacora_data = [
+            'fechahora' => $fecha_hora_actual, 
+             'usuario' => 'Brenda',
+             'modulo' => 'borrada categoria',
+             'mensaje' => $mensaje      // Mensaje personalizado
+          ];
+         $sql1 = "INSERT INTO bitacora_web (fechahora, usuario, modulo, mensaje)
+              VALUES (:fechahora, :usuario, :modulo, :mensaje)";
+         $stmt1 = $pdo->prepare($sql1);
+         $stmt1->execute($bitacora_data);
+            // END BITACORA
+
+
+
+
+
+
+
+
+
                 echo json_encode(['message' => 'Categoría eliminada exitosamente']);
             } else {
                 echo json_encode(['error' => 'ID no proporcionado']);

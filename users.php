@@ -1,10 +1,14 @@
 <?php
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *'); 
+header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
-
+header('Access-Control-Allow-Headers: Content-Type, Authorization, token');  // Permitir el encabezado 'token'
+header('Access-Control-Allow-Credentials: true'); 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    header('Access-Control-Allow-Origin: *');
+    header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+    header('Access-Control-Allow-Headers: Content-Type, Authorization, token');  // Permitir el encabezado 'token'
+    header('Access-Control-Allow-Credentials: true'); 
     http_response_code(200);
     exit;
 }
@@ -86,11 +90,11 @@ if ($method === 'POST') {
             $sql = "INSERT INTO users_web (correo, nombre, password, direccion) 
                     VALUES (:correo, :nombre, :password, :direccion)";
             $stmt = $pdo->prepare($sql);
-            $stmt->execute([
-                ':correo' => $correo,
-                ':nombre' => $nombre,
-                ':password' => $password,
-                ':direccion' => $direccion
+            $stmt->execute([ 
+                ':correo' => $correo, 
+                ':nombre' => $nombre, 
+                ':password' => $password, 
+                ':direccion' => $direccion 
             ]);
             http_response_code(201);
             echo json_encode(["success" => "Usuario registrado"]);
@@ -182,8 +186,8 @@ if ($method === 'POST') {
     }
 } elseif ($method === 'PUT' || $method === 'DELETE') {
     // Validar el token JWT
-    $headers = apache_request_headers();
-    $authHeader = $headers['Authorization'] ?? '';
+    $authHeader = isset($_SERVER['HTTP_TOKEN']) ? $_SERVER['HTTP_TOKEN'] : '';
+
 
     if (preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
         $jwt = $matches[1];
@@ -248,3 +252,4 @@ if ($method === 'POST') {
         echo json_encode(['error' => 'Token no proporcionado']);
     }
 }
+?>
