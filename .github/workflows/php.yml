@@ -19,5 +19,5 @@ jobs:
         server: c2651511.ferozo.com  # El servidor FTP (sin "ftp://")
         username: ${{ secrets.FTP_USERNAME }}
         password: ${{ secrets.FTP_PASSWORD }}
-        local-dir: ./  # Subir todo el contenido del repositorio (puedes cambiar esta ruta si necesitas solo ciertos archivos)
-        server-dir: ${{ secrets.FTP_REMOTE_DIR }}/apis  # Carpeta remota donde quieres subir los archivos
+        local-dir: ./  # Subir todo el contenido del repositorio
+        server-dir: ${{ secrets.FTP_REMOTE_DIR }}/apis/  # Asegúrate de que termine con '/'
