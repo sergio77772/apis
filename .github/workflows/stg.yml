@@ -22,8 +22,10 @@ jobs:
         local-dir: ./  # Subir todo el contenido del repositorio
         server-dir: public_html/distribuidora/apis/  # Asegúrate de que termine con '/'
         exclude: |
-          **/db.php     # Ignorar cualquier archivo db.php
-          **/.git       # Ignorar cualquier carpeta .git
-          **/.git/**    # Ignorar todo el contenido dentro de .git
-        log-level: verbose  # Muestra detalles en los registros
-        dry-run: false        # Simula el despliegue para probar exclusiones
+          db.php       # Ignorar el archivo db.php
+          .git         # Ignorar la carpeta .git
+          .git/**      # Ignorar todo el contenido de .git
+          .git/*       # Ignorar subdirectorios y archivos dentro de .git
+        log-level: verbose  # Mostrar detalles en los logs
+        dangerous-clean-slate: true  # Limpiar el directorio remoto antes de subir archivos
+        dry-run: true  # Habilitar simulación para verificar exclusiones
