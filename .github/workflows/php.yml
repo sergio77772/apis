@@ -1,5 +1,4 @@
 name: Deploy PHP Project to FTP Server
-
 on:
   push:
     branches:
