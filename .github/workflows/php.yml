@@ -21,3 +21,6 @@ jobs:
         password: ${{ secrets.FTP_PASSWORD }}
         local-dir: ./  # Subir todo el contenido del repositorio
         server-dir: ${{ secrets.FTP_REMOTE_DIR }}/apis/  # Asegúrate de que termine con '/'
+        excludes: |
+          **/db.php  # Ignorar el archivo db.php en cualquier directorio
+
