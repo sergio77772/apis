@@ -25,11 +25,16 @@ if ($logContent === false) {
     exit;
 }
 
-// Separar los errores por línea y devolverlos en formato JSON
+// Separar los errores por línea
 $logLines = explode("\n", $logContent);
 $logLines = array_filter($logLines); // Quitar líneas vacías
+$totalRecords = count($logLines);
 
-echo json_encode([
-    'status' => 'success',
-    'data' => $logLines
-], JSON_PRETTY_PRINT);
+// Parámetros de paginación
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1; // Página actual (por defecto, 1)
+$perPage = 10; // Registros por página
+$totalPages = (int)ceil($totalRecords / $perPage); // Total de páginas
+
+// Validar que la página esté dentro de los límites
+if ($page < 1) $page = 1;
+if ($page > $totalPages) $page
