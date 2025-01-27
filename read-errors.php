@@ -37,4 +37,38 @@ $totalPages = (int)ceil($totalRecords / $perPage); // Total de páginas
 
 // Validar que la página esté dentro de los límites
 if ($page < 1) $page = 1;
-if ($page > $totalPages) $page
+if ($page > $totalPages) $page = $totalPages;
+
+// Calcular el índice de inicio y fin para la paginación
+$startIndex = ($page - 1) * $perPage;
+$paginatedLogs = array_slice($logLines, $startIndex, $perPage);
+
+// Formatear cada línea de log en un objeto JSON estructurado
+$formattedLogs = [];
+foreach ($paginatedLogs as $logLine) {
+    // Regex para extraer los campos de cada línea del log
+    if (preg_match('/^\[(?<date>.+?)\] PHP (?<level>.+?):  (?<message>.+)$/', $logLine, $matches)) {
+        $formattedLogs[] = [
+            'date' => $matches['date'],
+            'level' => $matches['level'],
+            'message' => $matches['message']
+        ];
+    } else {
+        // Si no coincide, almacenar la línea completa como "sin procesar"
+        $formattedLogs[] = [
+            'date' => null,
+            'level' => 'unknown',
+            'message' => $logLine
+        ];
+    }
+}
+
+// Construir la respuesta en JSON
+echo json_encode([
+    'status' => 'success',
+    'page' => $page,
+    'per_page' => $perPage,
+    'total_records' => $totalRecords,
+    'total_pages' => $totalPages,
+    'data' => $formattedLogs
+], JSON_PRETTY_PRINT);
