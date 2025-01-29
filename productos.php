@@ -20,7 +20,7 @@ switch ($method) {
             $search = $_GET['search'] ?? '';
             
             // Construir la consulta con filtros opcionales
-            $whereClause = "WHERE descripcion LIKE :search";
+            $whereClause = "WHERE descripcion LIKE :search AND estado = 'Activo'";
             if ($idsubcategoria) {
                 $whereClause .= " AND idsubcategoria = :idsubcategoria";
             }
@@ -38,10 +38,11 @@ switch ($method) {
             // Calcular páginas totales
             $totalPages = ceil($total / $limit);
 
-            // Obtener los registros
+            // Obtener los registros ordenados por descripción
             $sql = "SELECT idproducto, idcategoria, idsubcategoria, idproveedor, descripcion, precioventa, preciocosto, deposito, ubicacion, stockmin, stock, stockmax, descripcioncompleta, codigoArticulo, estado, nivel, imagen
                     FROM productos_web 
                     $whereClause 
+                    ORDER BY descripcion ASC 
                     LIMIT :limit OFFSET :offset";
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':search', "%$search%");
