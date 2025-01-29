@@ -20,7 +20,7 @@ jobs:
         username: ftp@vt000269.ferozo.com
         password: 19tozuBUno
         local-dir: ./  # Subir todo el contenido del repositorio
-        server-dir: public_html/distribuidora/apis/  # Asegúrate de que termine con '/'
+        server-dir: public_html/apis-stg/  # Asegúrate de que termine con '/'
         exclude: |
           db.php       # Ignorar el archivo db.php
           .git         # Ignorar la carpeta .git
