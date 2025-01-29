@@ -50,7 +50,7 @@ switch ($method) {
                 'currentPage' => (int)$page,
             ]);
 
-       // BEGIN BITACORA 
+// BEGIN BITACORA 
         // Generar la fecha y hora actual en el formato adecuado
         $fecha_hora_actual = date('Y-m-d H:i:s');
         // Crear el mensaje concatenando los valores de $data
