@@ -82,7 +82,7 @@ switch ($method) {
             $stmt->execute($data);
 
 
-  // BEGIN BITACORA 
+  /* BEGIN BITACORA 
         // Generar la fecha y hora actual en el formato adecuado
         $fecha_hora_actual = date('Y-m-d H:i:s');
         // Crear el mensaje concatenando los valores de $data
@@ -98,6 +98,7 @@ switch ($method) {
          $stmt1 = $pdo->prepare($sql1);
          $stmt1->execute($bitacora_data);
             // END BITACORA
+            */
 
 
 
