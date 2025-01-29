@@ -1,9 +1,9 @@
-name: Deploy PHP Project to FTP Prod
+name: Deploy PHP Project to FTP stg
 
 on:
   push:
     branches:
-      - main  # Cambia "main" por la rama que activará el despliegue
+      - develop  # Cambia "main" por la rama que activará el despliegue
 
 jobs:
   ftp-deploy:
