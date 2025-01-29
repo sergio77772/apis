@@ -33,7 +33,8 @@ switch ($method) {
             // Obtener los registros
             $sql = "SELECT idbitacora, fechahora, usuario,modulo,mensaje, imagen
                     FROM bitacora_web 
-                    WHERE usuario LIKE :search 
+                    WHERE fechahora LIKE :search 
+                    ORDER BY fechahora DESC
                     LIMIT :limit OFFSET :offset";
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':search', "%$search%");
