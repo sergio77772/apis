@@ -153,6 +153,8 @@ switch ($method) {
         // Generar la fecha y hora actual en el formato adecuado
         $fecha_hora_actual = date('Y-m-d H:i:s');
         // Crear el mensaje concatenando los valores de $data
+                $nombre = $data['nombre'] ?? 'Desconocido';
+
          $mensaje = $data['nombre'] . ' , ' . $data['estado'] . ' , ' . $data['imagen'];
            $bitacora_data = [
             'fechahora' => $fecha_hora_actual, 
