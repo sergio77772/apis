@@ -2,7 +2,7 @@
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, PUT, OPTIONS');
+header('Access-Control-Allow-Methods: GET, PUT, POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With');
 
 require 'db.php'; // Conexión a la base de datos
@@ -20,6 +20,9 @@ switch ($method) {
         break;
     case 'PUT':
         modificarRegistro();
+        break;
+    case 'POST':
+        subirImagenes();
         break;
     default:
         echo json_encode(["message" => "Método no permitido"]);
@@ -48,30 +51,45 @@ function modificarRegistro() {
     $direccion = $_PUT['direccion'] ?? NULL;
     $email = $_PUT['email'] ?? NULL;
 
-    // Manejo de imágenes (si se subieron nuevas)
-    $imagenes = [];
-    if (!empty($_FILES['imagenes']['name'][0])) {
-        $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/img/';
-        foreach ($_FILES['imagenes']['tmp_name'] as $key => $tmp_name) {
-            $fileName = uniqid() . "_" . $_FILES['imagenes']['name'][$key];
-            $filePath = $uploadDir . $fileName;
-            move_uploaded_file($tmp_name, $filePath);
-            $imagenes[] = "/img/" . $fileName;
-        }
-    } else {
-        // Si no se suben nuevas imágenes, mantener las existentes
-        $stmt = $pdo->prepare("SELECT imagenes FROM comercio_web WHERE id = ?");
-        $stmt->execute([$id]);
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        $imagenes = json_decode($row['imagenes'], true) ?: [];
-    }
-
-    $imagenesJson = json_encode($imagenes);
-
-    // Actualizar los datos en la base de datos
-    $stmt = $pdo->prepare("UPDATE comercio_web SET Nombre = ?, telefono = ?, direccion = ?, email = ?, imagenes = ? WHERE id = ?");
-    $stmt->execute([$nombre, $telefono, $direccion, $email, $imagenesJson, $id]);
+    $stmt = $pdo->prepare("UPDATE comercio_web SET Nombre = ?, telefono = ?, direccion = ?, email = ? WHERE id = ?");
+    $stmt->execute([$nombre, $telefono, $direccion, $email, $id]);
 
     echo json_encode(["message" => "Registro actualizado"]);
+}
+
+function subirImagenes() {
+    global $pdo;
+
+    if (!isset($_POST['id']) || empty($_FILES['imagenes']['name'][0])) {
+        echo json_encode(["message" => "Faltan datos"]);
+        return;
+    }
+
+    $id = $_POST['id'];
+    $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/img/';
+    $imagenes = [];
+
+    foreach ($_FILES['imagenes']['tmp_name'] as $key => $tmp_name) {
+        $fileName = uniqid() . "_" . $_FILES['imagenes']['name'][$key];
+        $filePath = $uploadDir . $fileName;
+        move_uploaded_file($tmp_name, $filePath);
+        $imagenes[] = "/img/" . $fileName;
+    }
+
+    // Obtener imágenes actuales
+    $stmt = $pdo->prepare("SELECT imagenes FROM comercio_web WHERE id = ?");
+    $stmt->execute([$id]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $imagenesExistentes = json_decode($row['imagenes'], true) ?: [];
+
+    // Agregar nuevas imágenes
+    $imagenesFinales = array_merge($imagenesExistentes, $imagenes);
+    $imagenesJson = json_encode($imagenesFinales);
+
+    // Actualizar base de datos
+    $stmt = $pdo->prepare("UPDATE comercio_web SET imagenes = ? WHERE id = ?");
+    $stmt->execute([$imagenesJson, $id]);
+
+    echo json_encode(["message" => "Imágenes subidas correctamente"]);
 }
 ?>
