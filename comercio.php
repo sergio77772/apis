@@ -69,6 +69,21 @@ function subirImagenes() {
     $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/img/';
     $imagenes = [];
 
+    // Obtener imágenes actuales para eliminarlas
+    $stmt = $pdo->prepare("SELECT imagenes FROM comercio_web WHERE id = ?");
+    $stmt->execute([$id]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    $imagenesExistentes = json_decode($row['imagenes'], true) ?: [];
+
+    // Eliminar imágenes antiguas del servidor
+    foreach ($imagenesExistentes as $imgPath) {
+        $fileToDelete = $_SERVER['DOCUMENT_ROOT'] . $imgPath;
+        if (file_exists($fileToDelete)) {
+            unlink($fileToDelete);
+        }
+    }
+
+    // Subir y guardar nuevas imágenes
     foreach ($_FILES['imagenes']['tmp_name'] as $key => $tmp_name) {
         $fileName = uniqid() . "_" . $_FILES['imagenes']['name'][$key];
         $filePath = $uploadDir . $fileName;
@@ -76,20 +91,12 @@ function subirImagenes() {
         $imagenes[] = "/img/" . $fileName;
     }
 
-    // Obtener imágenes actuales
-    $stmt = $pdo->prepare("SELECT imagenes FROM comercio_web WHERE id = ?");
-    $stmt->execute([$id]);
-    $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    $imagenesExistentes = json_decode($row['imagenes'], true) ?: [];
+    $imagenesJson = json_encode($imagenes);
 
-    // Agregar nuevas imágenes
-    $imagenesFinales = array_merge($imagenesExistentes, $imagenes);
-    $imagenesJson = json_encode($imagenesFinales);
-
-    // Actualizar base de datos
+    // Actualizar base de datos con nuevas imágenes
     $stmt = $pdo->prepare("UPDATE comercio_web SET imagenes = ? WHERE id = ?");
     $stmt->execute([$imagenesJson, $id]);
 
-    echo json_encode(["message" => "Imágenes subidas correctamente"]);
+    echo json_encode(["message" => "Imágenes reemplazadas correctamente"]);
 }
 ?>
