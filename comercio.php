@@ -2,7 +2,7 @@
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Methods: GET, PUT, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With');
 
 require 'db.php'; // Archivo para la conexión a la base de datos
@@ -18,9 +18,6 @@ switch ($method) {
     case 'GET':
         listarRegistros();
         break;
-    case 'POST':
-        agregarRegistro();
-        break;
     case 'PUT':
         modificarRegistro();
         break;
@@ -33,36 +30,6 @@ function listarRegistros() {
     global $pdo;
     $stmt = $pdo->query("SELECT id, Nombre, telefono, direccion, email, imagenes FROM comercio_web");
     echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
-}
-
-function agregarRegistro() {
-    global $pdo;
-    
-    if (!isset($_POST['Nombre']) || !isset($_POST['telefono']) || !isset($_FILES['imagenes'])) {
-        echo json_encode(["message" => "Faltan datos"]);
-        return;
-    }
-    
-    $nombre = $_POST['Nombre'];
-    $telefono = $_POST['telefono'];
-    $direccion = $_POST['direccion'] ?? NULL;
-    $email = $_POST['email'] ?? NULL;
-    $imagenes = [];
-
-    $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/img/'; // Directorio donde se guardarán las imágenes
-
-    foreach ($_FILES['imagenes']['tmp_name'] as $key => $tmp_name) {
-        $fileName = uniqid() . "_" . $_FILES['imagenes']['name'][$key];
-        $filePath = $uploadDir . $fileName;
-        move_uploaded_file($tmp_name, $filePath);
-        $imagenes[] = "/img/" . $fileName;
-    }
-    
-    $imagenesJson = json_encode($imagenes);
-    $stmt = $pdo->prepare("INSERT INTO comercio_web (id, Nombre, telefono, direccion, email, imagenes) VALUES (NULL, ?, ?, ?, ?, ?)");
-    $stmt->execute([$nombre, $telefono, $direccion, $email, $imagenesJson]);
-
-    echo json_encode(["message" => "Registro agregado con éxito"]);
 }
 
 function modificarRegistro() {
@@ -79,10 +46,11 @@ function modificarRegistro() {
     $telefono = $_PUT['telefono'];
     $direccion = $_PUT['direccion'] ?? NULL;
     $email = $_PUT['email'] ?? NULL;
-    
+
+    // Actualizar el registro sin afectar las imágenes
     $stmt = $pdo->prepare("UPDATE comercio_web SET Nombre = ?, telefono = ?, direccion = ?, email = ? WHERE id = ?");
     $stmt->execute([$nombre, $telefono, $direccion, $email, $id]);
-    
+
     echo json_encode(["message" => "Registro actualizado"]);
 }
 
