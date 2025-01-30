@@ -205,14 +205,6 @@ switch ($method) {
          $stmt1->execute($bitacora_data);
             // END BITACORA
 
-
-
-
-
-
-
-
-
                 echo json_encode(['message' => 'Producto eliminada exitosamente']);
             } else {
                 echo json_encode(['error' => 'ID no proporcionado']);

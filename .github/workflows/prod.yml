@@ -1,0 +1,26 @@
+name: Deploy PHP Project to FTP Prod
+
+on:
+  push:
+    branches:
+      - main  # Cambia "main" por la rama que activará el despliegue
+
+jobs:
+  ftp-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Deploy to FTP Server
+      uses: SamKirkland/FTP-Deploy-Action@4.3.0
+      with:
+        server: c2651511.ferozo.com  # El servidor FTP (sin "ftp://")
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        local-dir: ./  # Subir todo el contenido del repositorio
+        server-dir: ${{ secrets.FTP_REMOTE_DIR }}/apis/  # Asegúrate de que termine con '/'
+        exclude: |
+          **/db.php  # Ignorar el archivo db.php en cualquier directorio
+

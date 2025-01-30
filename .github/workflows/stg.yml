@@ -1,9 +1,9 @@
-name: Deploy PHP Project to FTP Server
+name: Deploy PHP Project to FTP stg
 
 on:
   push:
     branches:
-      - main  # Cambia "main" por la rama que activará el despliegue
+      - develop  # Cambia "main" por la rama que activará el despliegue
 
 jobs:
   ftp-deploy:
@@ -20,4 +20,6 @@ jobs:
         username: ${{ secrets.FTP_USERNAME }}
         password: ${{ secrets.FTP_PASSWORD }}
         local-dir: ./  # Subir todo el contenido del repositorio
-        server-dir: ${{ secrets.FTP_REMOTE_DIR }}/apis/  # Asegúrate de que termine con '/'
+        server-dir: ${{ secrets.FTP_REMOTE_DIR }}/apis-stg/  # Asegúrate de que termine con '/'
+        exclude: |
+          **/db.php  # Ignorar el archivo db.php en cualquier directorio
