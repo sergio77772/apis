@@ -31,19 +31,19 @@ switch ($method) {
 
 function listarRegistros() {
     global $pdo;
-    $stmt = $pdo->query("SELECT * FROM registros");
+    $stmt = $pdo->query("SELECT id, Nombre, telefono, direccion, email, imagenes FROM comercio_web");
     echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
 }
 
 function agregarRegistro() {
     global $pdo;
     
-    if (!isset($_POST['nombre']) || !isset($_POST['telefono']) || !isset($_FILES['imagenes'])) {
+    if (!isset($_POST['Nombre']) || !isset($_POST['telefono']) || !isset($_FILES['imagenes'])) {
         echo json_encode(["message" => "Faltan datos"]);
         return;
     }
     
-    $nombre = $_POST['nombre'];
+    $nombre = $_POST['Nombre'];
     $telefono = $_POST['telefono'];
     $direccion = $_POST['direccion'] ?? NULL;
     $email = $_POST['email'] ?? NULL;
@@ -59,7 +59,7 @@ function agregarRegistro() {
     }
     
     $imagenesJson = json_encode($imagenes);
-    $stmt = $pdo->prepare("INSERT INTO comercio_web (Nombre, telefono, direccion, email, imagenes) VALUES (?, ?, ?, ?, ?)");
+    $stmt = $pdo->prepare("INSERT INTO comercio_web (id, Nombre, telefono, direccion, email, imagenes) VALUES (NULL, ?, ?, ?, ?, ?)");
     $stmt->execute([$nombre, $telefono, $direccion, $email, $imagenesJson]);
 
     echo json_encode(["message" => "Registro agregado con éxito"]);
@@ -69,18 +69,18 @@ function modificarRegistro() {
     global $pdo;
     parse_str(file_get_contents("php://input"), $_PUT);
     
-    if (!isset($_PUT['id']) || !isset($_PUT['nombre']) || !isset($_PUT['telefono'])) {
+    if (!isset($_PUT['id']) || !isset($_PUT['Nombre']) || !isset($_PUT['telefono'])) {
         echo json_encode(["message" => "Faltan datos"]);
         return;
     }
 
     $id = $_PUT['id'];
-    $nombre = $_PUT['nombre'];
+    $nombre = $_PUT['Nombre'];
     $telefono = $_PUT['telefono'];
     $direccion = $_PUT['direccion'] ?? NULL;
     $email = $_PUT['email'] ?? NULL;
     
-    $stmt = $pdo->prepare("UPDATE comercio_web SET Nombre = ?, telefono = ?, direccion = ?, email = ? WHERE idPrimaria = ?");
+    $stmt = $pdo->prepare("UPDATE comercio_web SET Nombre = ?, telefono = ?, direccion = ?, email = ? WHERE id = ?");
     $stmt->execute([$nombre, $telefono, $direccion, $email, $id]);
     
     echo json_encode(["message" => "Registro actualizado"]);
