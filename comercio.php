@@ -5,7 +5,7 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, PUT, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With');
 
-require 'db.php'; // Archivo para la conexión a la base de datos
+require 'db.php'; // Conexión a la base de datos
 
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -34,8 +34,9 @@ function listarRegistros() {
 
 function modificarRegistro() {
     global $pdo;
-    parse_str(file_get_contents("php://input"), $_PUT);
     
+    parse_str(file_get_contents("php://input"), $_PUT);
+
     if (!isset($_PUT['id']) || !isset($_PUT['Nombre']) || !isset($_PUT['telefono'])) {
         echo json_encode(["message" => "Faltan datos"]);
         return;
@@ -47,11 +48,30 @@ function modificarRegistro() {
     $direccion = $_PUT['direccion'] ?? NULL;
     $email = $_PUT['email'] ?? NULL;
 
-    // Actualizar el registro sin afectar las imágenes
-    $stmt = $pdo->prepare("UPDATE comercio_web SET Nombre = ?, telefono = ?, direccion = ?, email = ? WHERE id = ?");
-    $stmt->execute([$nombre, $telefono, $direccion, $email, $id]);
+    // Manejo de imágenes (si se subieron nuevas)
+    $imagenes = [];
+    if (!empty($_FILES['imagenes']['name'][0])) {
+        $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/img/';
+        foreach ($_FILES['imagenes']['tmp_name'] as $key => $tmp_name) {
+            $fileName = uniqid() . "_" . $_FILES['imagenes']['name'][$key];
+            $filePath = $uploadDir . $fileName;
+            move_uploaded_file($tmp_name, $filePath);
+            $imagenes[] = "/img/" . $fileName;
+        }
+    } else {
+        // Si no se suben nuevas imágenes, mantener las existentes
+        $stmt = $pdo->prepare("SELECT imagenes FROM comercio_web WHERE id = ?");
+        $stmt->execute([$id]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $imagenes = json_decode($row['imagenes'], true) ?: [];
+    }
+
+    $imagenesJson = json_encode($imagenes);
+
+    // Actualizar los datos en la base de datos
+    $stmt = $pdo->prepare("UPDATE comercio_web SET Nombre = ?, telefono = ?, direccion = ?, email = ?, imagenes = ? WHERE id = ?");
+    $stmt->execute([$nombre, $telefono, $direccion, $email, $imagenesJson, $id]);
 
     echo json_encode(["message" => "Registro actualizado"]);
 }
-
 ?>
