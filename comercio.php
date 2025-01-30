@@ -59,7 +59,7 @@ function agregarRegistro() {
     }
     
     $imagenesJson = json_encode($imagenes);
-    $stmt = $pdo->prepare("INSERT INTO registros (Nombre, telefono, direccion, email, imagenes) VALUES (?, ?, ?, ?, ?)");
+    $stmt = $pdo->prepare("INSERT INTO comercio_web (Nombre, telefono, direccion, email, imagenes) VALUES (?, ?, ?, ?, ?)");
     $stmt->execute([$nombre, $telefono, $direccion, $email, $imagenesJson]);
 
     echo json_encode(["message" => "Registro agregado con éxito"]);
@@ -80,7 +80,7 @@ function modificarRegistro() {
     $direccion = $_PUT['direccion'] ?? NULL;
     $email = $_PUT['email'] ?? NULL;
     
-    $stmt = $pdo->prepare("UPDATE registros SET Nombre = ?, telefono = ?, direccion = ?, email = ? WHERE idPrimaria = ?");
+    $stmt = $pdo->prepare("UPDATE comercio_web SET Nombre = ?, telefono = ?, direccion = ?, email = ? WHERE idPrimaria = ?");
     $stmt->execute([$nombre, $telefono, $direccion, $email, $id]);
     
     echo json_encode(["message" => "Registro actualizado"]);
