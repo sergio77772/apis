@@ -74,6 +74,41 @@ if ($method === 'POST' && isset($_GET['action']) && $_GET['action'] === 'registe
     }
 }
 
+if ($method === 'POST' && isset($_GET['action']) && $_GET['action'] === 'login') {
+    $data = json_decode(file_get_contents("php://input"), true);
+    if (empty($data['correo']) || empty($data['password'])) {
+        http_response_code(400);
+        echo json_encode(["error" => "Correo y contraseña son obligatorios"]);
+        exit;
+    }
+    
+    try {
+        $sql = "SELECT id, correo, password, nombre, foto, idrol FROM users_web WHERE correo = :correo";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([':correo' => $data['correo']]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($user && password_verify($data['password'], $user['password'])) {
+            $token = createJWT(['id' => $user['id'], 'correo' => $user['correo']], $secretKey);
+            http_response_code(200);
+            echo json_encode([
+                "success" => "Login exitoso",
+                "token" => $token,
+                "id" => $user['id'],
+                "nombre" => $user['nombre'],
+                "foto" => $user['foto'],
+                "idrol" => $user['idrol']
+            ]);
+        } else {
+            http_response_code(401);
+            echo json_encode(["error" => "Credenciales inválidas"]);
+        }
+    } catch (PDOException $e) {
+        http_response_code(500);
+        echo json_encode(["error" => "Error en el servidor"]);
+    }
+}
+
 if ($method === 'PUT') {
     parse_str(file_get_contents("php://input"), $data);
     if (empty($data['id']) || empty($data['nombre']) || empty($data['correo'])) {
