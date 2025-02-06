@@ -56,11 +56,11 @@ switch ($method) {
     case 'POST':
         if ($endpoint === 'bitacora') {
             $data = json_decode(file_get_contents('php://input'), true);
-            $sql = "INSERT INTO bitacora_web (nombre, estado, imagen)
-                    VALUES (:nombre, :estado, :imagen)";
+            $sql = "INSERT INTO bitacora_web (fechahora, usuario,modulo,mensaje, imagen)
+                    VALUES (:fechahora, :usuario, :modulo, :mensaje, :imagen)";
             $stmt = $pdo->prepare($sql);
             $stmt->execute($data);
-            echo json_encode(['message' => 'Categoría creada exitosamente']);
+            echo json_encode(['message' => 'Bitacora creada exitosamente']);
         } elseif ($endpoint === 'upload') {
             // Subida de imagen
             if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
