@@ -48,13 +48,14 @@ function uploadImage($file) {
 }
 
 if ($method === 'POST' && isset($_GET['action']) && $_GET['action'] === 'login') {
-    if (empty($_POST['correo']) || empty($_POST['password'])) {
+    $data = json_decode(file_get_contents("php://input"), true);
+    if (empty($data['correo']) || empty($data['password'])) {
         http_response_code(400);
         echo json_encode(["error" => "Correo y contraseña son obligatorios"]);
         exit;
     }
-    $correo = $_POST['correo'];
-    $password = $_POST['password'];
+    $correo = $data['correo'];
+    $password = $data['password'];
     try {
         $sql = "SELECT id, correo, nombre, idRol, foto, password FROM users_web WHERE correo = :correo";
         $stmt = $pdo->prepare($sql);
