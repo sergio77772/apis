@@ -50,22 +50,7 @@ switch ($method) {
                 'currentPage' => (int)$page,
             ]);
 
-// BEGIN BITACORA 
-        // Generar la fecha y hora actual en el formato adecuado
-        $fecha_hora_actual = date('Y-m-d H:i:s');
-        // Crear el mensaje concatenando los valores de $data
-         $mensaje = "ingreso a Categoria";
-           $bitacora_data = [
-            'fechahora' => $fecha_hora_actual, 
-             'usuario' => 'Brenda',
-             'modulo' => 'listado de categoria',
-             'mensaje' => $mensaje      // Mensaje personalizado
-          ];
-         $sql1 = "INSERT INTO bitacora_web (fechahora, usuario, modulo, mensaje)
-              VALUES (:fechahora, :usuario, :modulo, :mensaje)";
-         $stmt1 = $pdo->prepare($sql1);
-         $stmt1->execute($bitacora_data);
-            // END BITACORA
+
 
 
 
@@ -79,25 +64,7 @@ switch ($method) {
             VALUES (:nombre, :estado, :imagen)";
             $stmt = $pdo->prepare($sql);
             $stmt->execute($data);
-
-
-  // BEGIN BITACORA 
-        // Generar la fecha y hora actual en el formato adecuado
-         $fecha_hora_actual = date('Y-m-d H:i:s');
-        // Crear el mensaje concatenando los valores de $data
-         $mensaje = $data['nombre'] . ' , ' . $data['estado'] . ' , ' . $data['imagen'];
-           $bitacora_data = [
-            'fechahora' => $fecha_hora_actual, 
-             'usuario' => 'Brenda',
-             'modulo' => 'nueva categoria',
-             'mensaje' => $mensaje      // Mensaje personalizado
-          ];
-         $sql1 = "INSERT INTO bitacora_web (fechahora, usuario, modulo, mensaje)
-              VALUES (:fechahora, :usuario, :modulo, :mensaje)";
-         $stmt1 = $pdo->prepare($sql1);
-         $stmt1->execute($bitacora_data);
-            // END BITACORA
-
+  
             echo json_encode(['message' => 'Categoría creada exitosamente']);
 
 
@@ -145,22 +112,7 @@ switch ($method) {
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute($data);
 
-                // BEGIN BITACORA 
-        // Generar la fecha y hora actual en el formato adecuado
-         $fecha_hora_actual = date('Y-m-d H:i:s');
-         // Crear el mensaje concatenando los valores de $data
-          $mensaje = $data['nombre'] . ' , ' . $data['estado'] . ' , ' . $data['imagen'];
-            $bitacora_data = [
-             'fechahora' => $fecha_hora_actual, 
-              'usuario' => 'Brenda',
-              'modulo' => 'Editar categoria',
-              'mensaje' => $mensaje      // Mensaje personalizado
-           ];
-          $sql1 = "INSERT INTO bitacora_web (fechahora, usuario, modulo, mensaje)
-               VALUES (:fechahora, :usuario, :modulo, :mensaje)";
-          $stmt1 = $pdo->prepare($sql1);
-          $stmt1->execute($bitacora_data);
-             // END BITACORA
+           
 
 
 
@@ -179,29 +131,7 @@ switch ($method) {
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute(['idcategoria' => $id]);
 
-    // BEGIN BITACORA   
-    //falta usuario y mensaje
-        // Generar la fecha y hora actual en el formato adecuado
-        $fecha_hora_actual = date('Y-m-d H:i:s');
-        // Crear el mensaje concatenando los valores de $data
-         $mensaje = $id;
-           $bitacora_data = [
-            'fechahora' => $fecha_hora_actual, 
-             'usuario' => 'Brenda',
-             'modulo' => 'borrada categoria',
-             'mensaje' => $mensaje      // Mensaje personalizado
-          ];
-         $sql1 = "INSERT INTO bitacora_web (fechahora, usuario, modulo, mensaje)
-              VALUES (:fechahora, :usuario, :modulo, :mensaje)";
-         $stmt1 = $pdo->prepare($sql1);
-         $stmt1->execute($bitacora_data);
-            // END BITACORA
-
-
-
-
-
-
+  
 
 
 
