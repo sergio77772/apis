@@ -167,7 +167,7 @@ if ($method === 'GET') {
         $total = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
 
         
-        $sql = "SELECT id, correo, nombre, direccion FROM users_web WHERE nombre LIKE :search OR correo LIKE :search LIMIT :limit OFFSET :offset";
+        $sql = "SELECT id, correo, nombre, direccion,foto,idrol FROM users_web WHERE nombre LIKE :search OR correo LIKE :search LIMIT :limit OFFSET :offset";
         $stmt = $pdo->prepare($sql);
         $stmt->bindValue(':search', '%' . $search . '%', PDO::PARAM_STR);
         $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
