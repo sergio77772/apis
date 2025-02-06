@@ -47,42 +47,101 @@ function uploadImage($file) {
     return move_uploaded_file($file['tmp_name'], $filePath) ? '/img/' . $fileName : null;
 }
 
-if ($method === 'POST' && isset($_GET['action']) && $_GET['action'] === 'login') {
-    $data = json_decode(file_get_contents("php://input"), true);
-    if (empty($data['correo']) || empty($data['password'])) {
+if ($method === 'POST' && isset($_GET['action']) && $_GET['action'] === 'register') {
+    $data = $_POST;
+    if (empty($data['correo']) || empty($data['password']) || empty($data['nombre'])) {
         http_response_code(400);
-        echo json_encode(["error" => "Correo y contraseña son obligatorios"]);
+        echo json_encode(["error" => "Faltan datos obligatorios"]);
         exit;
     }
-    $correo = $data['correo'];
-    $password = $data['password'];
+    
+    $foto = isset($_FILES['image']) ? uploadImage($_FILES['image']) : null;
+    
     try {
-        $sql = "SELECT id, correo, nombre, idRol, foto, password FROM users_web WHERE correo = :correo";
+        $sql = "INSERT INTO users_web (correo, nombre, password, foto) VALUES (:correo, :nombre, :password, :foto)";
         $stmt = $pdo->prepare($sql);
-        $stmt->execute(['correo' => $correo]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-        if ($user && password_verify($password, $user['password'])) {
-            $payload = [
-                'id' => $user['id'],
-                'correo' => $user['correo'],
-                'nombre' => $user['nombre'],
-                'idRol' => $user['idRol'],
-                'foto' => $user['foto'],
-                'exp' => time() + 3600
-            ];
-            $jwt = createJWT($payload, $secretKey);
-            echo json_encode([
-                "success" => "Inicio de sesión exitoso", 
-                "token" => $jwt,
-                "id" => $user['id'],
-                "idRol" => $user['idRol'],
-                "nombre" => $user['nombre'],
-                "foto" => $user['foto']
-            ]);
-        } else {
-            http_response_code(401);
-            echo json_encode(["error" => "Credenciales inválidas"]);
-        }
+        $stmt->execute([
+            ':correo' => $data['correo'],
+            ':nombre' => $data['nombre'],
+            ':password' => password_hash($data['password'], PASSWORD_BCRYPT),
+            ':foto' => $foto
+        ]);
+        http_response_code(201);
+        echo json_encode(["success" => "Usuario registrado"]);
+    } catch (PDOException $e) {
+        http_response_code(500);
+        echo json_encode(["error" => "Error en el servidor"]);
+    }
+}
+
+if ($method === 'PUT') {
+    parse_str(file_get_contents("php://input"), $data);
+    if (empty($data['id']) || empty($data['nombre']) || empty($data['correo'])) {
+        http_response_code(400);
+        echo json_encode(["error" => "ID, correo y nombre son obligatorios"]);
+        exit;
+    }
+    
+    $foto = isset($_FILES['image']) ? uploadImage($_FILES['image']) : null;
+    
+    try {
+        $sql = "UPDATE users_web SET correo = :correo, nombre = :nombre, foto = COALESCE(:foto, foto) WHERE id = :id";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            ':correo' => $data['correo'],
+            ':nombre' => $data['nombre'],
+            ':foto' => $foto,
+            ':id' => $data['id']
+        ]);
+        http_response_code(200);
+        echo json_encode(["success" => "Usuario actualizado"]);
+    } catch (PDOException $e) {
+        http_response_code(500);
+        echo json_encode(["error" => "Error interno del servidor"]);
+    }
+}
+
+if ($method === 'DELETE') {
+    if (!isset($_GET['id'])) {
+        http_response_code(400);
+        echo json_encode(["error" => "ID requerido"]);
+        exit;
+    }
+    
+    try {
+        $sql = "DELETE FROM users_web WHERE id = :id";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([':id' => $_GET['id']]);
+        http_response_code(200);
+        echo json_encode(["success" => "Usuario eliminado"]);
+    } catch (PDOException $e) {
+        http_response_code(500);
+        echo json_encode(["error" => "Error en el servidor"]);
+    }
+}
+
+if ($method === 'GET') {
+    $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+    $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
+    $search = isset($_GET['search']) ? $_GET['search'] : '';
+    $offset = ($page - 1) * $limit;
+
+    try {
+        $countSql = "SELECT COUNT(*) as total FROM users_web WHERE nombre LIKE :search OR correo LIKE :search";
+        $countStmt = $pdo->prepare($countSql);
+        $countStmt->execute([':search' => '%' . $search . '%']);
+        $total = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+        $sql = "SELECT id, correo, nombre, direccion FROM users_web WHERE nombre LIKE :search OR correo LIKE :search LIMIT :limit OFFSET :offset";
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':search', '%' . $search . '%', PDO::PARAM_STR);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+        $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        http_response_code(200);
+        echo json_encode(["total" => $total, "page" => $page, "limit" => $limit, "data" => $users]);
     } catch (PDOException $e) {
         http_response_code(500);
         echo json_encode(["error" => "Error interno del servidor"]);
