@@ -109,24 +109,23 @@ if ($method === 'POST' && isset($_GET['action']) && $_GET['action'] === 'login')
     }
 }
 
-if ($method === 'PUT') {
-    parse_str(file_get_contents("php://input"), $data);
-    if (empty($data['id']) || empty($data['nombre']) || empty($data['correo'])) {
+if ($method === 'POST' && isset($_POST['method']) && $_POST['method'] === 'PUT') {
+    if (empty($_POST['id']) || empty($_POST['nombre']) || empty($_POST['correo'])) {
         http_response_code(400);
         echo json_encode(["error" => "ID, correo y nombre son obligatorios"]);
         exit;
     }
-    
-    $foto = isset($_FILES['image']) ? uploadImage($_FILES['image']) : null;
-    
+
+    $foto = isset($_FILES['imagen']) ? uploadImage($_FILES['imagen']) : null;
+
     try {
         $sql = "UPDATE users_web SET correo = :correo, nombre = :nombre, foto = COALESCE(:foto, foto) WHERE id = :id";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
-            ':correo' => $data['correo'],
-            ':nombre' => $data['nombre'],
+            ':correo' => $_POST['correo'],
+            ':nombre' => $_POST['nombre'],
             ':foto' => $foto,
-            ':id' => $data['id']
+            ':id' => $_POST['id']
         ]);
         http_response_code(200);
         echo json_encode(["success" => "Usuario actualizado"]);
