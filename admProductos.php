@@ -1,90 +1,70 @@
 <?php
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization, token');
-header('Access-Control-Allow-Credentials: true');
+header('Access-Control-Allow-Origin: *'); // Permite solicitudes desde cualquier dominio
+header('Access-Control-Allow-Methods: GET, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
+require 'db.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
-
-require 'db.php'; 
 $method = $_SERVER['REQUEST_METHOD'];
-$uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/img/'; // Carpeta donde se guardarán las imágenes
-$secretKey = 'your_secret_key';
+$endpoint = $_GET['endpoint'] ?? '';
+$page = $_GET['page'] ?? 1;
+$limit = $_GET['limit'] ?? 10;
+$idsubcategoria = $_GET['idsubcategoria'] ?? null;
 
-// Función para generar JWT
-function createJWT($payload, $secretKey) {
-    $header = json_encode(['alg' => 'HS256', 'typ' => 'JWT']);
-    $headerBase64 = base64UrlEncode($header);
-    $payloadBase64 = base64UrlEncode(json_encode($payload));
-    $signature = hash_hmac('sha256', "$headerBase64.$payloadBase64", $secretKey, true);
-    $signatureBase64 = base64UrlEncode($signature);
-    return "$headerBase64.$payloadBase64.$signatureBase64";
-}
+// Paginación
+$offset = ($page - 1) * $limit;
 
-function base64UrlEncode($data) {
-    return str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($data));
-}
+switch ($method) {
+    case 'GET':
+        if ($endpoint === 'producto') {
+            $search = $_GET['search'] ?? '';
+            
+            // Construir la consulta con filtros opcionales
+            $whereClause = "WHERE descripcion LIKE :search AND estado = 'Activo'";
+            if ($idsubcategoria) {
+                $whereClause .= " AND idsubcategoria = :idsubcategoria";
+            }
+            
+            // Obtener el total de registros
+            $countSql = "SELECT COUNT(*) as total FROM productos_web $whereClause";
+            $countStmt = $pdo->prepare($countSql);
+            $countStmt->bindValue(':search', "%$search%");
+            if ($idsubcategoria) {
+                $countStmt->bindValue(':idsubcategoria', (int)$idsubcategoria, PDO::PARAM_INT);
+            }
+            $countStmt->execute();
+            $total = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
 
-function validateJWT($jwt, $secretKey) {
-    $parts = explode('.', $jwt);
-    if (count($parts) !== 3) return false;
-    [$headerBase64, $payloadBase64, $signatureBase64] = $parts;
-    $signatureCheck = hash_hmac('sha256', "$headerBase64.$payloadBase64", $secretKey, true);
-    return hash_equals(base64UrlEncode($signatureCheck), $signatureBase64) ? json_decode(base64UrlDecode($payloadBase64), true) : false;
-}
+            // Calcular páginas totales
+            $totalPages = ceil($total / $limit);
 
-// Función para manejar la subida de imágenes con nombre único
-function uploadImage($file) {
-    global $uploadDir;
-    if ($file['error'] !== UPLOAD_ERR_OK) return null;
-    $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
-    $fileName = time() . '_' . uniqid() . '.' . $ext; // Nombre único usando la marca de tiempo
-    $filePath = $uploadDir . $fileName;
-    return move_uploaded_file($file['tmp_name'], $filePath) ? '/img/' . $fileName : null;
-}
+            // Obtener los registros ordenados por descripción
+            $sql = "SELECT idproducto, idcategoria, idsubcategoria, idproveedor, descripcion, precioventa, preciocosto, deposito, ubicacion, stockmin, stock, stockmax, descripcioncompleta, codigoArticulo, estado, nivel, imagen
+                    FROM productos_web 
+                    $whereClause 
+                    ORDER BY descripcion ASC 
+                    LIMIT :limit OFFSET :offset";
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindValue(':search', "%$search%");
+            if ($idsubcategoria) {
+                $stmt->bindValue(':idsubcategoria', (int)$idsubcategoria, PDO::PARAM_INT);
+            }
+            $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
+            $stmt->execute();
+            $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-if ($method === 'POST' && isset($_GET['action']) && $_GET['action'] === 'login') {
-    if (empty($_POST['correo']) || empty($_POST['password'])) {
-        http_response_code(400);
-        echo json_encode(["error" => "Correo y contraseña son obligatorios"]);
-        exit;
-    }
-    $correo = $_POST['correo'];
-    $password = $_POST['password'];
-    try {
-        $sql = "SELECT id, correo, nombre, idRol, foto, password FROM users_web WHERE correo = :correo";
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute(['correo' => $correo]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-        if ($user && password_verify($password, $user['password'])) {
-            $payload = [
-                'id' => $user['id'],
-                'correo' => $user['correo'],
-                'nombre' => $user['nombre'],
-                'idRol' => $user['idRol'],
-                'foto' => $user['foto'],
-                'exp' => time() + 3600
-            ];
-            $jwt = createJWT($payload, $secretKey);
+            // Respuesta JSON
             echo json_encode([
-                "success" => "Inicio de sesión exitoso", 
-                "token" => $jwt,
-                "id" => $user['id'],
-                "idRol" => $user['idRol'],
-                "nombre" => $user['nombre'],
-                "foto" => $user['foto']
+                'producto' => $result,
+                'total' => $total,
+                'totalPages' => $totalPages,
+                'currentPage' => (int)$page,
             ]);
-        } else {
-            http_response_code(401);
-            echo json_encode(["error" => "Credenciales inválidas"]);
         }
-    } catch (PDOException $e) {
-        http_response_code(500);
-        echo json_encode(["error" => "Error interno del servidor"]);
-    }
+        break;
+
+    default:
+        echo json_encode(['error' => 'Método no soportado']);
+        break;
 }
-?>
