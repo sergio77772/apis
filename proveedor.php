@@ -34,6 +34,7 @@ switch ($method) {
             $sql = "SELECT idproveedor, nombre,cuit,iva,telefono,telefono1,fax,direccion,email,banco,tipocuenta,cbu,provincia, estado, imagen
                     FROM proveedores_web 
                     WHERE nombre LIKE :search 
+                      ORDER BY nombre ASC 
                     LIMIT :limit OFFSET :offset";
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':search', "%$search%");

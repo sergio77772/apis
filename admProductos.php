@@ -34,7 +34,7 @@ switch ($method) {
             $sql = "SELECT idproducto,idcategoria,idsubcategoria,idproveedor, descripcion,precioventa,preciocosto,deposito,ubicacion,stockmin,stock,stockmax,descripcioncompleta,codigoArticulo, estado, nivel, imagen
                     FROM productos_web 
                     WHERE descripcion LIKE :search 
-                    ORDER BY idcategoria desc , idsubcategoria desc ,idproducto asc
+                    ORDER BY idcategoria desc , idsubcategoria desc ,codigoArticulo asc
                     LIMIT :limit OFFSET :offset";
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':search', "%$search%");
@@ -61,18 +61,11 @@ switch ($method) {
     case 'POST':
         if ($endpoint === 'producto') {
             $data = json_decode(file_get_contents('php://input'), true);
-            $sql = "INSERT INTO productos_web (idcategoria,idsubcategoria,idproveedor,descripcion,,precioventa,preciocosto,deposito,ubicacion,stockmin,stock,stockmax,descripcioncompleta,codigoArticulo, estado,nivel, imagen)
+            $sql = "INSERT INTO productos_web (idcategoria,idsubcategoria,idproveedor,descripcion,precioventa,preciocosto,deposito,ubicacion,stockmin,stock,stockmax,descripcioncompleta,codigoArticulo, estado,nivel, imagen)
                     VALUES (:idcategoria,:idsubcategoria,:idproveedor,:descripcion,:precioventa,:preciocosto,:deposito,:ubicacion,:stockmin,:stock,:stockmax,:descripcioncompleta,:codigoArticulo, :estado, :nivel, :imagen)";
             $stmt = $pdo->prepare($sql);
             $stmt->execute($data);
-
  
-
-
-
-
-
-
 
             echo json_encode(['message' => 'Categoría creada exitosamente']);
         } elseif ($endpoint === 'upload') {

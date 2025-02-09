@@ -19,25 +19,37 @@ switch ($method) {
     case 'GET':
         if ($endpoint === 'subcategoria') {
             $search = $_GET['search'] ?? '';
+            $idcategoria = $_GET['idcategoria'] ?? null;
+
+            // Construir la consulta base
+            $whereClause = "WHERE nombre LIKE :search";
+            $params = [':search' => "%$search%"];
+
+            // Filtrar por idcategoria si está presente
+            if (!empty($idcategoria)) {
+                $whereClause .= " AND idcategoria = :idcategoria";
+                $params[':idcategoria'] = $idcategoria;
+            }
 
             // Obtener el total de registros
-            $countSql = "SELECT COUNT(*) as total FROM subcategoria_web WHERE nombre LIKE :search";
+            $countSql = "SELECT COUNT(*) as total FROM subcategoria_web $whereClause";
             $countStmt = $pdo->prepare($countSql);
-            $countStmt->bindValue(':search', "%$search%");
-            $countStmt->execute();
+            $countStmt->execute($params);
             $total = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
 
             // Calcular páginas totales
             $totalPages = ceil($total / $limit);
 
-            // Obtener los registros
-            $sql = "SELECT idsubcategoria, nombre,idcategoria, estado, imagen
+            // Obtener los registros con paginación
+            $sql = "SELECT idsubcategoria, nombre, idcategoria, estado, imagen
                     FROM subcategoria_web 
-                    WHERE nombre LIKE :search 
-                     ORDER BY idsubcategoria asc
+                    $whereClause
+                    ORDER BY idsubcategoria ASC
                     LIMIT :limit OFFSET :offset";
             $stmt = $pdo->prepare($sql);
-            $stmt->bindValue(':search', "%$search%");
+            foreach ($params as $key => $value) {
+                $stmt->bindValue($key, $value);
+            }
             $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
             $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
             $stmt->execute();
@@ -51,19 +63,15 @@ switch ($method) {
                 'currentPage' => (int)$page,
             ]);
         }
-
         break;
 
     case 'POST':
         if ($endpoint === 'subcategoria') {
             $data = json_decode(file_get_contents('php://input'), true);
-            $sql = "INSERT INTO subcategoria_web (nombre,idcategoria, estado, imagen)
-                    VALUES (:nombre, :idcategoria,:estado, :imagen)";
+            $sql = "INSERT INTO subcategoria_web (nombre, idcategoria, estado, imagen)
+                    VALUES (:nombre, :idcategoria, :estado, :imagen)";
             $stmt = $pdo->prepare($sql);
             $stmt->execute($data);
-
- 
-
 
             echo json_encode(['message' => 'Categoría creada exitosamente']);
         } elseif ($endpoint === 'upload') {
@@ -101,15 +109,11 @@ switch ($method) {
             if ($id) {
                 $data = json_decode(file_get_contents('php://input'), true);
                 $sql = "UPDATE subcategoria_web 
-                        SET nombre = :nombre,idcategoria= :idcategoria, estado = :estado, imagen = :imagen
+                        SET nombre = :nombre, idcategoria = :idcategoria, estado = :estado, imagen = :imagen
                         WHERE idsubcategoria = :idsubcategoria";
                 $data['idsubcategoria'] = $id;
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute($data);
-
- 
-
-
 
                 echo json_encode(['message' => 'Categoría actualizada exitosamente']);
             } else {
@@ -125,11 +129,6 @@ switch ($method) {
                 $sql = "DELETE FROM subcategoria_web WHERE idsubcategoria = :idsubcategoria";
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute(['idsubcategoria' => $id]);
-
- 
-
-
-
 
                 echo json_encode(['message' => 'SubCategoría eliminada exitosamente']);
             } else {
