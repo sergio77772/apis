@@ -34,7 +34,7 @@ switch ($method) {
             $sql = "SELECT idproducto,idcategoria,idsubcategoria,idproveedor, descripcion,precioventa,preciocosto,deposito,ubicacion,stockmin,stock,stockmax,descripcioncompleta,codigoArticulo, estado, nivel, imagen
                     FROM productos_web 
                     WHERE descripcion LIKE :search 
-                    ORDER BY idcategoria desc , idsubcategoria desc ,CodigoArticulo asc ,estado asc
+                    ORDER BY idcategoria desc , idsubcategoria desc ,codigoArticulo asc
                     LIMIT :limit OFFSET :offset";
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':search', "%$search%");
@@ -65,14 +65,7 @@ switch ($method) {
                     VALUES (:idcategoria,:idsubcategoria,:idproveedor,:descripcion,:precioventa,:preciocosto,:deposito,:ubicacion,:stockmin,:stock,:stockmax,:descripcioncompleta,:codigoArticulo, :estado, :nivel, :imagen)";
             $stmt = $pdo->prepare($sql);
             $stmt->execute($data);
-
  
-
-
-
-
-
-
 
             echo json_encode(['message' => 'Categoría creada exitosamente']);
         } elseif ($endpoint === 'upload') {
