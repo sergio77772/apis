@@ -15,17 +15,13 @@ $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/img/'; // Directorio en la raíz del 
 // Paginación
 $offset = ($page - 1) * $limit;
 
-   // Generar la fecha y hora actual en el formato adecuado
-   $fecha_hora_actual = date('Y-m-d H:i:s');
- 
-
 switch ($method) {
     case 'GET':
-        if ($endpoint === 'mesa') {
+        if ($endpoint === 'venta') {
             $search = $_GET['search'] ?? '';
 
             // Obtener el total de registros
-            $countSql = "SELECT COUNT(*) as total FROM mesa_web WHERE nombre LIKE :search";
+            $countSql = "SELECT COUNT(*) as total FROM ventas_web WHERE descripcion LIKE :search";
             $countStmt = $pdo->prepare($countSql);
             $countStmt->bindValue(':search', "%$search%");
             $countStmt->execute();
@@ -35,9 +31,9 @@ switch ($method) {
             $totalPages = ceil($total / $limit);
 
             // Obtener los registros
-            $sql = "SELECT idmesa, titulo,dias,estados,nombre, solucion,estado, imagen,fechahora
-                    FROM mesa_web 
-                    WHERE nombre LIKE :search 
+            $sql = "SELECT idventa,preciocosto, precioventa, unidadmedida,cantidad,importe,descripcion,codigoArticulo,idfactura,imagen
+                    FROM ventas_web 
+                    WHERE descripcion LIKE :search 
                     LIMIT :limit OFFSET :offset";
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':search', "%$search%");
@@ -48,7 +44,7 @@ switch ($method) {
 
             // Respuesta JSON
             echo json_encode([
-                'mesa' => $result,
+                'venta' => $result,
                 'total' => $total,
                 'totalPages' => $totalPages,
                 'currentPage' => (int)$page,
@@ -56,26 +52,25 @@ switch ($method) {
 
 
 
+
+
         }
         break;
 
     case 'POST':
-        if ($endpoint === 'mesa') {
+        if ($endpoint === 'venta') {
             $data = json_decode(file_get_contents('php://input'), true);
-           
-              $data[ 'fechahora'] = $fecha_hora_actual;
-
-
-            $sql = "INSERT INTO mesa_web (nombre,titulo,estados,dias, estado,solucion,imagen ,fechahora)
-                    VALUES (:nombre,:titulo,:estados,:dias, :estado, :solucion, :imagen, :fechahora)";
+            $sql = "INSERT INTO categoria_web (preciocosto, precioventa, unidadmedida,cantidad,importe,descripcion,codigoArticulo,idfactura,imagen)
+            VALUES (:preciocosto, :precioventa, :unidadmedida,:cantidad,:importe,:descripcion,:codigoArticulo,:idfactura,:imagen)";
             $stmt = $pdo->prepare($sql);
             $stmt->execute($data);
+  
+            echo json_encode(['message' => 'Ventas creada exitosamente']);
 
 
 
 
 
-            echo json_encode(['message' => 'Mesa creada exitosamente']);
         } elseif ($endpoint === 'upload') {
             // Subida de imagen
             if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
@@ -106,24 +101,22 @@ switch ($method) {
         break;
 
     case 'PUT':
-        if ($endpoint === 'mesa') {
+        if ($endpoint === 'venta') {
             $id = $_GET['id'] ?? null;
             if ($id) {
                 $data = json_decode(file_get_contents('php://input'), true);
-                $data[ 'fechahora'] = $fecha_hora_actual;
-                $sql = "UPDATE mesa_web 
-                        SET nombre = :nombre,titulo = :titulo,dias =:dias,estados =:estados, estado = :estado, solucion = :solucion, imagen = :imagen, fechahora = :fechahora 
-                        WHERE idmesa = :idmesa";
-                $data['idmesa'] = $id;
+                $sql = "UPDATE ventas_web 
+                        SET preciocosto = :preciocosto, precioventa = :precioventa, unidadmedida = :unidadmedida,cantidad = :cantidad,importe = :importe,descripcion =:descripcion,codigoArticulo = :codigoArticulo,idfactura = :idfactura,imagen = :imagen)
+                        WHERE idventa = :idventa";
+                $data['idventa'] = $id;
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute($data);
 
- 
+           
 
 
 
-
-                echo json_encode(['message' => 'Mesa actualizada exitosamente']);
+                echo json_encode(['message' => 'Categoría actualizada exitosamente']);
             } else {
                 echo json_encode(['error' => 'ID no proporcionado']);
             }
@@ -131,15 +124,14 @@ switch ($method) {
         break;
 
     case 'DELETE':
-        if ($endpoint === 'mesa') {
+        if ($endpoint === 'venta') {
             $id = $_GET['id'] ?? null;
             if ($id) {
-                $sql = "DELETE FROM mesa_web WHERE idmesa = :idmesa";
+                $sql = "DELETE FROM ventas_web WHERE idventa = :idventa";
                 $stmt = $pdo->prepare($sql);
-                $stmt->execute(['idmesa' => $id]);
+                $stmt->execute(['idventa' => $id]);
 
-
-    
+  
 
 
 

@@ -54,12 +54,25 @@ switch ($method) {
         break;
 
     case 'POST':
+
         if ($endpoint === 'bitacora') {
             $data = json_decode(file_get_contents('php://input'), true);
-            $sql = "INSERT INTO bitacora_web (fechahora, usuario,modulo,mensaje, imagen)
+               // Obtener la fecha y hora actual en Argentina
+            $datetime = new DateTime('now', new DateTimeZone('America/Argentina/Buenos_Aires'));
+            $data['fechahora'] = $datetime->format('Y-m-d H:i:s');
+
+            $sql = "INSERT INTO bitacora_web (fechahora, usuario, modulo, mensaje, imagen)
                     VALUES (:fechahora, :usuario, :modulo, :mensaje, :imagen)";
             $stmt = $pdo->prepare($sql);
-            $stmt->execute($data);
+
+            // Asegurarse de que los parámetros sean un array asociativo con claves coincidentes
+            $stmt->execute([
+                ':fechahora' => $data['fechahora'],
+                ':usuario' => str_replace('"', '', $data['usuario']),
+                ':modulo' => $data['modulo'],
+                ':mensaje' => $data['mensaje'],
+                ':imagen' => $data['imagen']
+            ]);
             echo json_encode(['message' => 'Bitacora creada exitosamente']);
         } elseif ($endpoint === 'upload') {
             // Subida de imagen
