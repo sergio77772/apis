@@ -4,7 +4,7 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With');
 
-require 'db.php'; // Conexión a la base de datos
+require 'db.php'; 
 
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -28,14 +28,12 @@ switch ($method) {
         break;
 }
 
-// 📌 Función para listar localidades
 function listarLocalidades() {
     global $pdo;
     $stmt = $pdo->query("SELECT idlocalidad, nombre, precio_envio FROM localidades ORDER BY nombre ASC");
     echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
 }
 
-// 📌 Función para agregar una nueva localidad
 function agregarLocalidad() {
     global $pdo;
     $data = json_decode(file_get_contents("php://input"), true);
@@ -51,7 +49,6 @@ function agregarLocalidad() {
     echo json_encode(["message" => "Localidad agregada correctamente", "id" => $pdo->lastInsertId()]);
 }
 
-// 📌 Función para modificar una localidad
 function modificarLocalidad() {
     global $pdo;
     
