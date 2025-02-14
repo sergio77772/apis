@@ -15,17 +15,13 @@ $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/img/'; // Directorio en la raíz del 
 // Paginación
 $offset = ($page - 1) * $limit;
 
-   // Generar la fecha y hora actual en el formato adecuado
-   $fecha_hora_actual = date('Y-m-d H:i:s');
- 
-
 switch ($method) {
     case 'GET':
-        if ($endpoint === 'mesa') {
+        if ($endpoint === 'cliente') {
             $search = $_GET['search'] ?? '';
 
             // Obtener el total de registros
-            $countSql = "SELECT COUNT(*) as total FROM mesa_web WHERE nombre LIKE :search";
+            $countSql = "SELECT COUNT(*) as total FROM clientes_web WHERE nombreapellido LIKE :search";
             $countStmt = $pdo->prepare($countSql);
             $countStmt->bindValue(':search', "%$search%");
             $countStmt->execute();
@@ -35,9 +31,10 @@ switch ($method) {
             $totalPages = ceil($total / $limit);
 
             // Obtener los registros
-            $sql = "SELECT idmesa, titulo,dias,estados,nombre, solucion,estado, imagen,fechahora
-                    FROM mesa_web 
-                    WHERE nombre LIKE :search 
+            $sql = "SELECT idcliente,dnicuit,condicioniva,nombreapellido,cuil,direccion,localidad,provincia,nacionalidad,telefono,email,fechanacimiento,estadocivil,cuentacorriente,limitecuentacorriente,calificacion,estado,fechaalta,foto
+                    FROM clientes_web 
+                    WHERE nombreapellido LIKE :search 
+                      ORDER BY nombreapellido
                     LIMIT :limit OFFSET :offset";
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':search', "%$search%");
@@ -48,38 +45,25 @@ switch ($method) {
 
             // Respuesta JSON
             echo json_encode([
-                'mesa' => $result,
+                'Cliente' => $result,
                 'total' => $total,
                 'totalPages' => $totalPages,
                 'currentPage' => (int)$page,
             ]);
-
-
-
         }
         break;
 
     case 'POST':
-        if ($endpoint === 'mesa') {
+        if ($endpoint === 'cliente') {
             $data = json_decode(file_get_contents('php://input'), true);
-           
-              $data[ 'fechahora'] = $fecha_hora_actual;
-
-
-            $sql = "INSERT INTO mesa_web (nombre,titulo,estados,dias, estado,solucion,imagen ,fechahora)
-                    VALUES (:nombre,:titulo,:estados,:dias, :estado, :solucion, :imagen, :fechahora)";
+            $sql = "INSERT INTO clientes_web (dnicuit,  condicioniva, nombreapellido, cuil, direccion, localidad, provincia, nacionalidad, telefono, email, fechanacimiento, estadocivil ,cuentacorriente, limitecuentacorriente, calificacion, estado, fechaalta, foto ) VALUES (:dnicuit , :condicioniva, :nombreapellido, :cuil, :direccion, :localidad, :provincia, :nacionalidad, :telefono, :email, :fechanacimiento, :estadocivil, :cuentacorriente, :limitecuentacorriente, :calificacion, :estado, :fechaalta, :foto)";
             $stmt = $pdo->prepare($sql);
             $stmt->execute($data);
-
-
-
-
-
-            echo json_encode(['message' => 'Mesa creada exitosamente']);
+            echo json_encode(['message' => 'Cliente creada exitosamente']);
         } elseif ($endpoint === 'upload') {
             // Subida de imagen
-            if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
-                $file = $_FILES['image'];
+            if (isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
+                $file = $_FILES['foto'];
                 $fileName = basename($file['name']);
                 $targetFilePath = $uploadDir . $fileName;
 
@@ -106,24 +90,18 @@ switch ($method) {
         break;
 
     case 'PUT':
-        if ($endpoint === 'mesa') {
+        if ($endpoint === 'cliente') {
             $id = $_GET['id'] ?? null;
             if ($id) {
                 $data = json_decode(file_get_contents('php://input'), true);
-                $data[ 'fechahora'] = $fecha_hora_actual;
-                $sql = "UPDATE mesa_web 
-                        SET nombre = :nombre,titulo = :titulo,dias =:dias,estados =:estados, estado = :estado, solucion = :solucion, imagen = :imagen, fechahora = :fechahora 
-                        WHERE idmesa = :idmesa";
-                $data['idmesa'] = $id;
+                $sql = "UPDATE clientes_web 
+                        SET dnicuit = :dnicuit,condicioniva = :condicioniva,nombreapellido = :nombreapellido,cuil = :cuil,direccion = :direccion,localidad = :localidad,provincia = :provincia,nacionalidad = :nacionalidad,telefono = :telefono,email = :email,fechanacimiento = :fechanacimiento,estadocivil = :estadocivil,cuentacorriente = :cuentacorriente, limitecuentacorriente= :limitecuentacorriente,calificacion = :calificacion,estado = :estado,fechaalta = :fechaalta,foto = :foto
+                        WHERE idcliente = :idcliente";
+                        
+                $data['idcliente'] = $id;
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute($data);
-
- 
-
-
-
-
-                echo json_encode(['message' => 'Mesa actualizada exitosamente']);
+                echo json_encode(['message' => 'Cliente actualizada exitosamente']);
             } else {
                 echo json_encode(['error' => 'ID no proporcionado']);
             }
@@ -131,19 +109,13 @@ switch ($method) {
         break;
 
     case 'DELETE':
-        if ($endpoint === 'mesa') {
+        if ($endpoint === 'cliente') {
             $id = $_GET['id'] ?? null;
             if ($id) {
-                $sql = "DELETE FROM mesa_web WHERE idmesa = :idmesa";
+                $sql = "DELETE FROM clientes_web WHERE idcliente = :idcliente";
                 $stmt = $pdo->prepare($sql);
-                $stmt->execute(['idmesa' => $id]);
-
-
-    
-
-
-
-                echo json_encode(['message' => 'Categoría eliminada exitosamente']);
+                $stmt->execute(['idcliente' => $id]);
+                echo json_encode(['message' => 'Cliente eliminada exitosamente']);
             } else {
                 echo json_encode(['error' => 'ID no proporcionado']);
             }

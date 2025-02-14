@@ -37,6 +37,10 @@ function validateJWT($jwt, $secretKey) {
     return hash_equals(base64UrlEncode($signatureCheck), $signatureBase64) ? json_decode(base64UrlDecode($payloadBase64), true) : false;
 }
 
+function base64UrlDecode($data) {
+    return base64_decode(str_replace(['-', '_'], ['+', '/'], $data));
+}
+
 // Función para manejar la subida de imágenes con nombre único
 function uploadImage($file) {
     global $uploadDir;
@@ -92,7 +96,7 @@ if ($method === 'POST' && isset($_GET['action']) && $_GET['action'] === 'login')
             $token = createJWT(['id' => $user['id'], 'correo' => $user['correo']], $secretKey);
             http_response_code(200);
             echo json_encode([
-                "success" => "Login exitoso",
+                "success" => "Login exitoso1",
                 "token" => $token,
                 "id" => $user['id'],
                 "nombre" => $user['nombre'],
