@@ -50,7 +50,7 @@ if ($method === 'POST' && isset($_GET['action']) && $_GET['action'] === 'registe
 }
 
 
-if ($method === 'POST' && isset($_POST['method']) && $_POST['method'] === 'PUT') {
+if ($method === 'POST' && isset($_POST['method']) && $_POST['method'] === 'PUT' && isset($_GET['action']) && $_GET['action'] === 'edit') {
     if (empty($_POST['id']) || empty($_POST['nombre']) || empty($_POST['correo'])) {
         http_response_code(400);
         echo json_encode(["error" => "ID, correo y nombre son obligatorios"]);
@@ -60,12 +60,13 @@ if ($method === 'POST' && isset($_POST['method']) && $_POST['method'] === 'PUT')
     $foto = isset($_FILES['imagen']) ? uploadImage($_FILES['imagen']) : null;
 
     try {
-        $sql = "UPDATE users_web SET correo = :correo, nombre = :nombre, foto = COALESCE(:foto, foto) WHERE id = :id";
+        $sql = "UPDATE users_web SET correo = :correo, nombre = :nombre, direccion = :direccion, telefono = :telefono, foto = COALESCE(:foto, foto) WHERE id = :id";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
             ':correo' => $_POST['correo'],
             ':nombre' => $_POST['nombre'],
-            ':foto' => $foto,
+            ':foto' => $foto, ':direccion' => $data['direccion'] ?? null,
+            ':telefono' => $data['telefono'] ?? null,
             ':id' => $_POST['id']
         ]);
         http_response_code(200);
