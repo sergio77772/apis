@@ -65,3 +65,4 @@ function modificarLocalidad() {
     echo json_encode(["message" => "Localidad actualizada correctamente"]);
 }
 ?>
+
