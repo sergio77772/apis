@@ -62,13 +62,16 @@ if ($method === 'POST' && isset($_GET['action']) && $_GET['action'] === 'registe
     $foto = isset($_FILES['image']) ? uploadImage($_FILES['image']) : null;
     
     try {
-        $sql = "INSERT INTO users_web (correo, nombre, password, foto) VALUES (:correo, :nombre, :password, :foto)";
+        $sql = "INSERT INTO users_web (correo, nombre, password, direccion, telefono, foto, idRol) VALUES (:correo, :nombre, :password, :direccion, :telefono, :foto, :idRol)";
         $stmt = $pdo->prepare($sql);
-        $stmt->execute([
+       $stmt->execute([
             ':correo' => $data['correo'],
             ':nombre' => $data['nombre'],
             ':password' => password_hash($data['password'], PASSWORD_BCRYPT),
-            ':foto' => $foto
+            ':direccion' => $data['direccion'] ?? null,
+            ':telefono' => $data['telefono'] ?? null,
+            ':foto' => $foto,
+            ':idRol' => $data['idRol'] ?? null
         ]);
         http_response_code(201);
         echo json_encode(["success" => "Usuario registrado"]);
@@ -87,7 +90,7 @@ if ($method === 'POST' && isset($_GET['action']) && $_GET['action'] === 'login')
     }
     
     try {
-        $sql = "SELECT id, correo, password, nombre, foto, idrol FROM users_web WHERE correo = :correo";
+        $sql = "SELECT id, correo, password, nombre, direccion, telefono, foto, idRol FROM users_web WHERE correo = :correo";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([':correo' => $data['correo']]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -96,12 +99,14 @@ if ($method === 'POST' && isset($_GET['action']) && $_GET['action'] === 'login')
             $token = createJWT(['id' => $user['id'], 'correo' => $user['correo']], $secretKey);
             http_response_code(200);
             echo json_encode([
-                "success" => "Login exitoso1",
+                "success" => "Login exitoso",
                 "token" => $token,
                 "id" => $user['id'],
                 "nombre" => $user['nombre'],
+                "direccion" => $user['direccion'],
+                "telefono" => $user['telefono'],
                 "foto" => $user['foto'],
-                "idrol" => $user['idrol']
+                "idRol" => $user['idRol']
             ]);
         } else {
             http_response_code(401);
