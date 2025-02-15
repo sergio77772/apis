@@ -50,7 +50,7 @@ if ($method === 'POST' && isset($_GET['action']) && $_GET['action'] === 'registe
 }
 
 
-if ($method === 'POST' && isset($_POST['method']) && $_POST['method'] === 'PUT' isset($_GET['action']) && $_GET['action'] === 'edit') {
+if ($method === 'POST' && isset($_POST['method']) && $_POST['method'] === 'PUT' && isset($_GET['action']) && $_GET['action'] === 'edit') {
     if (empty($_POST['id']) || empty($_POST['nombre']) || empty($_POST['correo'])) {
         http_response_code(400);
         echo json_encode(["error" => "ID, correo y nombre son obligatorios"]);
