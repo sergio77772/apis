@@ -104,6 +104,7 @@ if ($method === 'POST' && isset($_GET['action']) && $_GET['action'] === 'login')
                 "id" => $user['id'],
                 "nombre" => $user['nombre'],
                 "direccion" => $user['direccion'],
+                "correo" => $user['correo'],
                 "telefono" => $user['telefono'],
                 "foto" => $user['foto'],
                 "idRol" => $user['idRol']
