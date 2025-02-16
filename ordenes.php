@@ -41,7 +41,7 @@ try {
             }
             $stmtItem->execute([
                 ":order_id" => $order_id,
-                ":product_id" => $producto['product_id'],
+                ":product_id" => $producto['productId'],
                 ":cantidad" => $producto['cantidad']
             ]);
         }
