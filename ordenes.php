@@ -32,16 +32,16 @@ try {
         $order_id = $pdo->lastInsertId();
 
         $sqlItem = "INSERT INTO order_items (order_id, product_id, cantidad) 
-                    VALUES (:order_id, :productId, :cantidad)";
+                    VALUES (:order_id, :product_id, :cantidad)";
         $stmtItem = $pdo->prepare($sqlItem);
 
         foreach ($data['productos'] as $producto) {
-            if (!isset($producto['productId']) || !isset($producto['cantidad'])) {
+            if (!isset($producto['product_id']) || !isset($producto['cantidad'])) {
                 throw new Exception("Formato de producto inválido");
             }
             $stmtItem->execute([
                 ":order_id" => $order_id,
-                ":product_id" => $producto['productId'],
+                ":product_id" => $producto['product_id'],
                 ":cantidad" => $producto['cantidad']
             ]);
         }
