@@ -9,13 +9,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-require 'db.php';
+require 'db.php'; // Incluye la conexión a la base de datos
+
 $method = $_SERVER['REQUEST_METHOD'];
 
 try {
-    $db = new Database();
-    $pdo = $db->connect();
-
     // GUARDAR ORDEN
     if ($method === 'POST' && isset($_GET['action']) && $_GET['action'] === 'guardar_orden') {
         $data = json_decode(file_get_contents("php://input"), true);
