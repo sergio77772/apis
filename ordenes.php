@@ -90,7 +90,7 @@ if ($method === 'GET' && isset($_GET['action']) && $_GET['action'] === 'ordenes_
     $sql = "SELECT o.id, oe.nombre AS usuario, os.status_name AS estado, o.created_at
             FROM orders o
             JOIN order_status os ON o.status_id = os.id
-            JOIN orden_estatus oe ON o.user_id = oe.id
+            JOIN order_status oe ON o.user_id = oe.id
             WHERE o.user_id = :user_id
             ORDER BY o.created_at DESC";
 
