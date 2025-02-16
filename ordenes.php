@@ -9,16 +9,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-require 'db.php'; // Incluye la conexión a la base de datos
+require 'db.php'; // Conexión a la base de datos
 
 $method = $_SERVER['REQUEST_METHOD'];
 
 try {
-    // GUARDAR ORDEN
     if ($method === 'POST' && isset($_GET['action']) && $_GET['action'] === 'guardar_orden') {
         $data = json_decode(file_get_contents("php://input"), true);
 
-        if (empty($data['usuario_id']) || empty($data['productos']) || !is_array($data['productos'])) {
+        if (empty($data['user_id']) || empty($data['productos']) || !is_array($data['productos'])) {
             http_response_code(400);
             echo json_encode(["error" => "Faltan datos obligatorios"]);
             exit;
@@ -27,25 +26,25 @@ try {
         // Iniciar transacción
         $pdo->beginTransaction();
 
-        // Insertar la orden con estado inicial "En proceso" (estado_id = 1)
-        $sqlOrden = "INSERT INTO ordenes (usuario_id, estado_id, fecha) VALUES (:usuario_id, 1, NOW())";
+        // Insertar la orden con estado inicial "En proceso" (status_id = 1)
+        $sqlOrden = "INSERT INTO orders (user_id, status_id, created_at) VALUES (:user_id, 1, NOW())";
         $stmt = $pdo->prepare($sqlOrden);
-        $stmt->execute([":usuario_id" => $data['usuario_id']]);
-        $orden_id = $pdo->lastInsertId();
+        $stmt->execute([":user_id" => $data['user_id']]);
+        $order_id = $pdo->lastInsertId();
 
         // Insertar productos en la orden
-        $sqlProducto = "INSERT INTO ordenes_productos (orden_id, producto_id, cantidad, precio_unitario) 
-                        SELECT :orden_id, id, :cantidad, precio FROM productos WHERE id = :producto_id";
-        $stmtProducto = $pdo->prepare($sqlProducto);
+        $sqlItem = "INSERT INTO order_items (order_id, product_id, cantidad) 
+                    VALUES (:order_id, :product_id, :cantidad)";
+        $stmtItem = $pdo->prepare($sqlItem);
 
         foreach ($data['productos'] as $producto) {
-            if (!isset($producto['producto_id']) || !isset($producto['cantidad'])) {
+            if (!isset($producto['product_id']) || !isset($producto['cantidad'])) {
                 throw new Exception("Formato de producto inválido");
             }
-            $stmtProducto->execute([
-                ":orden_id" => $orden_id,
-                ":cantidad" => $producto['cantidad'],
-                ":producto_id" => $producto['producto_id']
+            $stmtItem->execute([
+                ":order_id" => $order_id,
+                ":product_id" => $producto['product_id'],
+                ":cantidad" => $producto['cantidad']
             ]);
         }
 
@@ -53,7 +52,7 @@ try {
         $pdo->commit();
 
         http_response_code(201);
-        echo json_encode(["success" => "Orden guardada exitosamente", "orden_id" => $orden_id]);
+        echo json_encode(["success" => "Orden guardada exitosamente", "order_id" => $order_id]);
         exit;
     }
 
