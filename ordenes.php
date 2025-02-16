@@ -87,10 +87,10 @@ try {
 if ($method === 'GET' && isset($_GET['action']) && $_GET['action'] === 'ordenes_usuario' && isset($_GET['user_id'])) {
     $user_id = intval($_GET['user_id']);
 
-    $sql = "SELECT o.id, oe.nombre AS usuario, os.nombre AS estado, o.created_at
+    $sql = "SELECT o.id, u.nombre AS usuario, os.nombre AS estado, o.created_at
             FROM orders o
             JOIN order_status os ON o.status_id = os.id
-            JOIN order_status oe ON o.user_id = oe.id
+            JOIN users_web u ON o.user_id = u.id
             WHERE o.user_id = :user_id
             ORDER BY o.created_at DESC";
 
@@ -102,6 +102,10 @@ if ($method === 'GET' && isset($_GET['action']) && $_GET['action'] === 'ordenes_
     echo json_encode($orders);
     exit;
 }
+
+http_response_code(400);
+echo json_encode(["error" => "Acción no válida"]);
+
     http_response_code(400);
     echo json_encode(["error" => "Acción no válida"]);
 
