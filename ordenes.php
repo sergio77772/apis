@@ -84,23 +84,24 @@ try {
     }
 
     // Obtener todas las órdenes de un usuario
-    if ($method === 'GET' && isset($_GET['action']) && $_GET['action'] === 'ordenes_usuario' && isset($_GET['user_id'])) {
-        $user_id = intval($_GET['user_id']);
+if ($method === 'GET' && isset($_GET['action']) && $_GET['action'] === 'ordenes_usuario' && isset($_GET['user_id'])) {
+    $user_id = intval($_GET['user_id']);
 
-        $sql = "SELECT o.id, os.status_name AS estado, o.created_at
-                FROM orders o
-                JOIN order_status os ON o.status_id = os.id
-                WHERE o.user_id = :user_id
-                ORDER BY o.created_at DESC";
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([":user_id" => $user_id]);
-        $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $sql = "SELECT o.id, oe.nombre AS usuario, os.status_name AS estado, o.created_at
+            FROM orders o
+            JOIN order_status os ON o.status_id = os.id
+            JOIN orden_estatus oe ON o.user_id = oe.id
+            WHERE o.user_id = :user_id
+            ORDER BY o.created_at DESC";
 
-        http_response_code(200);
-        echo json_encode($orders);
-        exit;
-    }
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([":user_id" => $user_id]);
+    $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+    http_response_code(200);
+    echo json_encode($orders);
+    exit;
+}
     http_response_code(400);
     echo json_encode(["error" => "Acción no válida"]);
 
