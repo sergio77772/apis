@@ -56,7 +56,7 @@ try {
     if ($method === 'GET' && isset($_GET['action']) && $_GET['action'] === 'obtener_orden' && isset($_GET['id'])) {
         $order_id = intval($_GET['id']);
 
-        $sql = "SELECT o.id, o.user_id, os.status_name AS estado, o.created_at
+        $sql = "SELECT o.id, o.user_id, os.nombre AS estado, o.created_at
                 FROM orders o
                 JOIN order_status os ON o.status_id = os.id
                 WHERE o.id = :order_id";
@@ -70,9 +70,9 @@ try {
             exit;
         }
 
-        $sqlItems = "SELECT oi.product_id, p.nombre AS producto, oi.cantidad, p.precio
+        $sqlItems = "SELECT oi.product_id, p.descripcion AS producto, oi.cantidad, p.precioventa
                      FROM order_items oi
-                     JOIN products p ON oi.product_id = p.id
+                     JOIN productos_web p ON oi.product_id = p.idproducto
                      WHERE oi.order_id = :order_id";
         $stmtItems = $pdo->prepare($sqlItems);
         $stmtItems->execute([":order_id" => $order_id]);
@@ -83,23 +83,45 @@ try {
         exit;
     }
 
-    // Obtener todas las órdenes de un usuario
+  // Obtener todas las órdenes de un usuario con paginación
 if ($method === 'GET' && isset($_GET['action']) && $_GET['action'] === 'ordenes_usuario' && isset($_GET['user_id'])) {
     $user_id = intval($_GET['user_id']);
+    $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
+    $limit = 20;
+    $offset = ($page - 1) * $limit;
 
+    // Consulta con paginación
     $sql = "SELECT o.id, u.nombre AS usuario, os.nombre AS estado, o.created_at
             FROM orders o
             JOIN order_status os ON o.status_id = os.id
             JOIN users_web u ON o.user_id = u.id
             WHERE o.user_id = :user_id
-            ORDER BY o.created_at DESC";
+            ORDER BY o.created_at DESC
+            LIMIT :limit OFFSET :offset";
 
     $stmt = $pdo->prepare($sql);
-    $stmt->execute([":user_id" => $user_id]);
+    $stmt->bindParam(":user_id", $user_id, PDO::PARAM_INT);
+    $stmt->bindParam(":limit", $limit, PDO::PARAM_INT);
+    $stmt->bindParam(":offset", $offset, PDO::PARAM_INT);
+    $stmt->execute();
     $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+    // Contar total de órdenes
+    $countSql = "SELECT COUNT(*) as total FROM orders WHERE user_id = :user_id";
+    $countStmt = $pdo->prepare($countSql);
+    $countStmt->execute([":user_id" => $user_id]);
+    $totalOrders = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
+    
+    // Calcular total de páginas
+    $totalPages = ceil($totalOrders / $limit);
+
     http_response_code(200);
-    echo json_encode($orders);
+    echo json_encode([
+        "orders" => $orders,
+        "total_orders" => $totalOrders,
+        "total_pages" => $totalPages,
+        "current_page" => $page
+    ]);
     exit;
 }
 
