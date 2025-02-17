@@ -70,7 +70,7 @@ try {
             exit;
         }
 
-        $sqlItems = "SELECT oi.product_id, p.descripcion AS producto, oi.cantidad, p.precio
+        $sqlItems = "SELECT oi.product_id, p.descripcion AS producto, oi.cantidad, p.precioventa
                      FROM order_items oi
                      JOIN productos_web p ON oi.product_id = p.id
                      WHERE oi.order_id = :order_id";
