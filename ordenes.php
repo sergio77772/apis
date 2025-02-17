@@ -72,7 +72,7 @@ try {
 
         $sqlItems = "SELECT oi.product_id, p.descripcion AS producto, oi.cantidad, p.precioventa
                      FROM order_items oi
-                     JOIN productos_web p ON oi.product_id = p.id
+                     JOIN productos_web p ON oi.product_id = p.idproducto
                      WHERE oi.order_id = :order_id";
         $stmtItems = $pdo->prepare($sqlItems);
         $stmtItems->execute([":order_id" => $order_id]);
