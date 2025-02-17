@@ -56,7 +56,7 @@ try {
     if ($method === 'GET' && isset($_GET['action']) && $_GET['action'] === 'obtener_orden' && isset($_GET['id'])) {
         $order_id = intval($_GET['id']);
 
-        $sql = "SELECT o.id, o.user_id, os.status_name AS estado, o.created_at
+        $sql = "SELECT o.id, o.user_id, os.nombre AS estado, o.created_at
                 FROM orders o
                 JOIN order_status os ON o.status_id = os.id
                 WHERE o.id = :order_id";
