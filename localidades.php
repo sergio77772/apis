@@ -33,8 +33,38 @@ switch ($method) {
 
 function listarLocalidades() {
     global $pdo;
-    $stmt = $pdo->query("SELECT idlocalidad, nombre, precio_envio FROM localidades ORDER BY nombre ASC");
-    echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+
+    $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+    $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 10;
+    $offset = ($page - 1) * $limit;
+
+    $search = isset($_GET['search']) ? $_GET['search'] : '';
+
+    $sql = "SELECT idlocalidad, nombre, precio_envio FROM localidades 
+            WHERE nombre LIKE :search 
+            ORDER BY nombre ASC 
+            LIMIT :limit OFFSET :offset";
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->bindValue(':search', "%$search%", PDO::PARAM_STR);
+    $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+    $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+    $stmt->execute();
+
+    $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    $countStmt = $pdo->prepare("SELECT COUNT(*) as total FROM localidades WHERE nombre LIKE :search");
+    $countStmt->bindValue(':search', "%$search%", PDO::PARAM_STR);
+    $countStmt->execute();
+    $total = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
+
+    echo json_encode([
+        "total" => $total,
+        "page" => $page,
+        "limit" => $limit,
+        "pages" => ceil($total / $limit),
+        "data" => $result
+    ]);
 }
 
 function agregarLocalidad() {
