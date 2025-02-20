@@ -85,7 +85,7 @@ function agregarRol() {
 function modificarRol() {
     global $pdo;
     
-    parse_str(file_get_contents("php://input"), $_PUT);
+    $data = json_decode(file_get_contents("php://input"), true);
 
     if (!isset($_PUT['idRol']) || !isset($_PUT['descripcion'])) {
         echo json_encode(["message" => "Faltan datos"]);
@@ -101,7 +101,7 @@ function modificarRol() {
 function eliminarRol() {
     global $pdo;
     
-    parse_str(file_get_contents("php://input"), $_DELETE);
+    $data = json_decode(file_get_contents("php://input"), true);
 
     if (!isset($_DELETE['idRol'])) {
         echo json_encode(["message" => "Faltan datos"]);
